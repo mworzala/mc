@@ -1,0 +1,43 @@
+{
+    "configurations": [
+        {
+            "type": "go",
+            "name": "mc account login",
+            "goExecPath": "go",
+            "workingDir": "$PROJECT_DIR$",
+            "buildParams": ["$PROJECT_DIR$/cmd/mc"],
+            "runParams": ["account", "login", "mso"],
+        },
+        {
+            "type": "go",
+            "name": "mc account default",
+            "goExecPath": "go",
+            "workingDir": "$PROJECT_DIR$",
+            "buildParams": ["$PROJECT_DIR$/cmd/mc"],
+            "runParams": ["account", "default"],
+        },
+        {
+            "type": "go",
+            "name": "mc install 1.19.2",
+            "goExecPath": "go",
+            "workingDir": "$PROJECT_DIR$",
+            "buildParams": ["$PROJECT_DIR$/cmd/mc"],
+            "runParams": ["install", "1.19.2"],
+        },
+        {
+            "type": "go",
+            "name": "mc run",
+            "goExecPath": "go",
+            "workingDir": "$PROJECT_DIR$",
+            "buildParams": ["$PROJECT_DIR$/cmd/mc"],
+            "runParams": ["run"],
+        },
+        {
+            "type": "command",
+            "name": "Go Tests",
+            "workingDir": "$PROJECT_DIR$",
+            "program": "go",
+            "args": ["test", "./..."],
+        }
+    ]
+}

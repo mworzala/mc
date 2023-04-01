@@ -130,14 +130,14 @@ type xboxLiveAuthResponse struct {
 func XboxLiveAuth(msoAccessToken string) (*XboxLiveToken, error) {
 	endpoint := "https://user.auth.xboxlive.com/user/authenticate"
 	body := fmt.Sprintf(`{
-		"Properties": {
-			"AuthMethod": "RPS",
-			"SiteName": "user.auth.xboxlive.com",
-			"RpsTicket": "d=%s"
-		},
-		"RelyingParty": "http://auth.xboxlive.com",
-		"TokenType": "JWT"
-    }`, msoAccessToken)
+"Properties": {
+"AuthMethod": "RPS",
+"SiteName": "user.auth.xboxlive.com",
+"RpsTicket": "d=%s"
+},
+"RelyingParty": "http://auth.xboxlive.com",
+"TokenType": "JWT"
+}`, msoAccessToken)
 
 	res, err := http.Post(endpoint, "application/json", strings.NewReader(body))
 	if err != nil {
@@ -170,13 +170,13 @@ type XSTSToken struct {
 func XSTSAuth(xblToken string) (*XSTSToken, error) {
 	endpoint := "https://xsts.auth.xboxlive.com/xsts/authorize"
 	body := fmt.Sprintf(`{
-		"Properties": {
-			"SandboxId": "RETAIL",
-			"UserTokens": ["%s"]
-		},
-		"RelyingParty": "rp://api.minecraftservices.com/",
-		"TokenType": "JWT"
-    }`, xblToken)
+"Properties": {
+"SandboxId": "RETAIL",
+"UserTokens": ["%s"]
+},
+"RelyingParty": "rp://api.minecraftservices.com/",
+"TokenType": "JWT"
+}`, xblToken)
 
 	res, err := http.Post(endpoint, "application/json", strings.NewReader(body))
 	if err != nil {
