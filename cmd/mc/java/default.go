@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	appModel "github.com/mworzala/mc-cli/internal/pkg/app/model"
 	"github.com/mworzala/mc-cli/internal/pkg/cli"
+	appModel "github.com/mworzala/mc-cli/internal/pkg/cli/model"
 	"github.com/spf13/cobra"
 )
 
