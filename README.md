@@ -1,5 +1,5 @@
 # mc-cli
-
+todo write more here
 
 
 ## Command Spec
@@ -43,11 +43,3 @@ autolink.servers = bool
 autolink.saves = bool
 autolink.resourcepacks = bool
 ```
-
-
-## Feature todos
-- symlink options.txt, resourcepacks, servers.dat, saves optionally
-
-mc java list
-mc java discover /path/to/java/home
-mc java default liberica-17
