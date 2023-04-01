@@ -42,6 +42,7 @@ type Manager interface {
 	// The Manager is not resposible for persisting the change, Save should be called afterwards.
 	SetDefault(uuid string) error
 
+	Accounts() []string
 	// GetAccount returns the account with the given value, or nil if it cannot be found.
 	// The mode indicates whether to search by ModeUUID, ModeName, or both.
 	// When matching on uuid, the form with or without dashes is OK
@@ -59,17 +60,17 @@ type Manager interface {
 }
 
 type fileManager struct {
-	Path     string              `json:"-"`
-	Default  string              `json:"default"`
-	Accounts map[string]*Account `json:"accounts"`
+	Path        string              `json:"-"`
+	Default     string              `json:"default"`
+	AccountData map[string]*Account `json:"accounts"`
 }
 
 func NewManager(dataDir string) (Manager, error) {
 	accountsFile := path.Join(dataDir, accountsFileName)
 	if _, err := os.Stat(accountsFile); errors.Is(err, fs.ErrNotExist) {
 		return &fileManager{
-			Path:     accountsFile,
-			Accounts: make(map[string]*Account),
+			Path:        accountsFile,
+			AccountData: make(map[string]*Account),
 		}, nil
 	}
 
@@ -83,8 +84,8 @@ func NewManager(dataDir string) (Manager, error) {
 	if err := json.NewDecoder(f).Decode(&manager); err != nil {
 		return nil, fmt.Errorf("failed to read %s: %w", accountsFileName, err)
 	}
-	if manager.Accounts == nil {
-		manager.Accounts = make(map[string]*Account)
+	if manager.AccountData == nil {
+		manager.AccountData = make(map[string]*Account)
 	}
 	return &manager, nil
 }
@@ -94,7 +95,7 @@ func (m *fileManager) GetDefault() string {
 }
 
 func (m *fileManager) SetDefault(uuid string) error {
-	if _, ok := m.Accounts[uuid]; !ok {
+	if _, ok := m.AccountData[uuid]; !ok {
 		return ErrAccountNotFound
 	}
 
@@ -102,9 +103,16 @@ func (m *fileManager) SetDefault(uuid string) error {
 	return nil
 }
 
+func (m *fileManager) Accounts() (result []string) {
+	for k := range m.AccountData {
+		result = append(result, k)
+	}
+	return
+}
+
 func (m *fileManager) GetAccount(value string, mode int) *Account {
 	if mode&ModeUUID != 0 && util.IsUUID(value) {
-		return m.Accounts[util.ExpandUUID(value)]
+		return m.AccountData[util.ExpandUUID(value)]
 	}
 
 	// If it wasnt a UUID and we are not searching name, we're done
@@ -113,7 +121,7 @@ func (m *fileManager) GetAccount(value string, mode int) *Account {
 	}
 
 	test := strings.ToLower(value)
-	for _, acc := range m.Accounts {
+	for _, acc := range m.AccountData {
 		name := strings.ToLower(acc.Profile.Username)
 		if test == name {
 			return acc
@@ -173,7 +181,7 @@ func (m *fileManager) LoginMicrosoft(promptCallback MSOPromptCallback) (*Account
 	account.Profile.Username = profile.Username
 
 	// Make sure to save the newly added account
-	m.Accounts[account.UUID] = &account
+	m.AccountData[account.UUID] = &account
 	return &account, nil
 }
 

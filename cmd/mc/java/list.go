@@ -10,5 +10,6 @@ var listCmd = &cobra.Command{
 }
 
 func handleList(_ *cobra.Command, _ []string) error {
+	//todo
 	return nil
 }

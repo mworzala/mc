@@ -2,7 +2,9 @@ package account
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -13,14 +15,16 @@ const (
 	Mojang    Type = "mojang"
 )
 
-func TypeFromString(accountType string) (Type, bool) {
-	switch accountType {
+var ErrInvalidType = errors.New("invalid account type")
+
+func ParseType(s string) (Type, error) {
+	switch strings.ToLower(s) {
 	case "microsoft", "mso":
-		return Microsoft, true
+		return Microsoft, nil
 	case "mojang", "minecraft", "mc":
-		return Mojang, true
+		return Mojang, nil
 	}
-	return "", false
+	return "", ErrInvalidType
 }
 
 type Account struct {

@@ -4,54 +4,67 @@ import (
 	"fmt"
 
 	"github.com/mworzala/mc-cli/internal/pkg/account"
+	appModel "github.com/mworzala/mc-cli/internal/pkg/app/model"
+	"github.com/mworzala/mc-cli/internal/pkg/cli"
 	"github.com/mworzala/mc-cli/internal/pkg/platform"
 	"github.com/spf13/cobra"
 )
 
-var loginCmd = &cobra.Command{
-	Use:        "login",
-	Short:      "todo",
-	Long:       "abcd",
-	ValidArgs:  []string{"microsoft", "mojang"},
-	ArgAliases: []string{"mso", "minecraft", "mc"},
-	Args:       cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
-	RunE:       handleLogin,
+type loginAccountOpts struct {
+	app *cli.App
+
+	accountType account.Type
+	setDefault  bool
 }
 
-var (
-	setDefaultAccountFlag bool
-)
+func newLoginCmd(app *cli.App) *cobra.Command {
+	var o loginAccountOpts
 
-func init() {
-	loginCmd.Flags().BoolVar(&setDefaultAccountFlag, "set-default", false, "Set the new account as the default")
+	cmd := &cobra.Command{
+		Use:        "login",
+		Short:      "todo",
+		Long:       "abcd",
+		ValidArgs:  []string{"microsoft", "mojang"},
+		ArgAliases: []string{"mso", "minecraft", "mc"},
+		Args:       cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
+		RunE: func(_ *cobra.Command, args []string) (err error) {
+			o.app = app
+
+			accountType := account.Microsoft
+			if len(args) > 0 {
+				accountType, err = account.ParseType(args[0])
+				if err != nil {
+					return
+				}
+			}
+			o.accountType = accountType
+
+			return o.handleLogin()
+		},
+	}
+
+	cmd.Flags().BoolVar(&o.setDefault, "set-default", false, "Set the new account as the default")
+
+	return cmd
 }
 
-func handleLogin(_ *cobra.Command, args []string) (err error) {
-	accountType := account.Microsoft
-	if len(args) > 0 {
-		var ok bool
-		if accountType, ok = account.TypeFromString(args[0]); !ok {
-			return fmt.Errorf("unknown account type: %s", args[0])
-		}
-	}
-
-	dataDir, err := platform.GetConfigDir()
-	if err != nil {
-		return err
-	}
-
-	manager, err := account.NewManager(dataDir)
-	if err != nil {
-		return fmt.Errorf("failed to read accounts: %w", err)
-	}
+func (o *loginAccountOpts) handleLogin() (err error) {
+	accountManager := o.app.AccountManager()
 
 	var acc *account.Account
-	if accountType == account.Microsoft {
-		acc, err = manager.LoginMicrosoft(func(verificationUrl, userCode string) {
+	if o.accountType == account.Microsoft {
+		acc, err = accountManager.LoginMicrosoft(func(verificationUrl, userCode string) {
+			//todo should have a global flag to disable interactive elements like this
 			_ = platform.OpenUrl(verificationUrl)
 			_ = platform.WriteToClipboard(userCode)
-			//todo better message
-			println(verificationUrl, userCode)
+
+			err := o.app.Present(&appModel.LoginPrompt{
+				Url:  verificationUrl,
+				Code: userCode,
+			})
+			if err != nil {
+				o.app.Fatal(err)
+			}
 		})
 	} else {
 		return fmt.Errorf("mojang login currently not supported")
@@ -59,16 +72,18 @@ func handleLogin(_ *cobra.Command, args []string) (err error) {
 
 	// Update the default in case the user requested to update the default,
 	// or if there is no default set indicating that this is the first account
-	if setDefaultAccountFlag || manager.GetDefault() == "" {
-		if err := manager.SetDefault(acc.UUID); err != nil {
+	if o.setDefault || accountManager.GetDefault() == "" {
+		if err := accountManager.SetDefault(acc.UUID); err != nil {
 			return fmt.Errorf("failed to set default account: %w", err)
 		}
 	}
 
-	if err := manager.Save(); err != nil {
+	if err := accountManager.Save(); err != nil {
 		return err
 	}
 
-	fmt.Printf("🎉 Signed in as %s\n", acc.Profile.Username)
-	return
+	return o.app.Present(&appModel.Account{
+		UUID:     acc.UUID,
+		Username: acc.Profile.Username,
+	})
 }

@@ -1,13 +1,19 @@
 package account
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/mworzala/mc-cli/internal/pkg/cli"
+	"github.com/spf13/cobra"
+)
 
-var Cmd = &cobra.Command{
-	Use:   "account",
-	Short: "Manage accounts or log into a new one",
-}
+func NewAccountCmd(app *cli.App) *cobra.Command {
 
-func init() {
-	Cmd.AddCommand(loginCmd)
-	Cmd.AddCommand(defaultCmd)
+	cmd := &cobra.Command{
+		Use:   "account",
+		Short: "Manage accounts or log into a new one",
+	}
+
+	cmd.AddCommand(newLoginCmd(app))
+	cmd.AddCommand(newDefaultCmd(app))
+
+	return cmd
 }

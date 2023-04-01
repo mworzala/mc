@@ -1,73 +1,84 @@
 package account
 
 import (
+	"errors"
 	"fmt"
 
+	appModel "github.com/mworzala/mc-cli/internal/pkg/app/model"
+	"github.com/mworzala/mc-cli/internal/pkg/cli"
+
 	"github.com/mworzala/mc-cli/internal/pkg/account"
-	"github.com/mworzala/mc-cli/internal/pkg/platform"
 	"github.com/spf13/cobra"
 )
 
-//todo flags to emit the uuid instead of the name when getting the default
-//todo if i add a json output for all the commands, output the whole profile
-
-var defaultCmd = &cobra.Command{
-	Use:     "default",
-	Aliases: []string{"use"},
-	Short:   "Get or set the default account",
-	Long:    "abcd",
-	Args:    cobra.MaximumNArgs(1),
-	//todo override completions
-	RunE: handleDefault,
+type defaultAccountOpts struct {
+	app *cli.App
 }
 
-func handleDefault(_ *cobra.Command, args []string) (err error) {
-	dataDir, err := platform.GetConfigDir()
-	if err != nil {
-		return err
+func newDefaultCmd(app *cli.App) *cobra.Command {
+	var o defaultAccountOpts
+
+	cmd := &cobra.Command{
+		Use:     "default",
+		Aliases: []string{"use"},
+		Short:   "Get or set the default account",
+		Long:    "abcd",
+		Args:    cobra.MaximumNArgs(1),
+		//todo override completions
+		RunE: func(_ *cobra.Command, args []string) error {
+			o.app = app
+
+			if len(args) == 0 {
+				return o.getDefault()
+			}
+			return o.setDefault(args)
+		},
 	}
 
-	manager, err := account.NewManager(dataDir)
-	if err != nil {
-		return fmt.Errorf("failed to read accounts: %w", err)
-	}
-
-	if len(args) == 0 {
-		return showDefaultAccount(manager)
-	}
-	return setDefaultAccount(manager, args[0])
+	return cmd
 }
 
-func showDefaultAccount(m account.Manager) error {
-	accountId := m.GetDefault()
-	if accountId == "" {
-		println("No accounts present, use `mc account login`") //todo better message (reminder to just search for println calls)
-		return nil
+func (o *defaultAccountOpts) getDefault() error {
+	accountManager := o.app.AccountManager()
+	accounts := accountManager.Accounts()
+	if len(accounts) == 0 {
+		return errors.New("no accounts configured. try 'mc account login'")
 	}
 
-	acc := m.GetAccount(accountId, account.ModeUUID)
+	// Read default account
+	acc := accountManager.GetAccount(accountManager.GetDefault(), account.ModeUUID)
 	if acc == nil {
-		return fmt.Errorf("no account with default id present: %s", accountId)
+		// In this case the default has been misconfigured because we know there is at least one account, but yet the default does not exist.
+		// Correct the issue by resetting the default account to the first known account
+		if err := accountManager.SetDefault(accounts[0]); err != nil {
+			return err
+		}
+		if err := accountManager.Save(); err != nil {
+			return err
+		}
+
+		// Now we know this is a safe call
+		acc = accountManager.GetAccount(accountManager.GetDefault(), account.ModeUUID)
 	}
 
-	println("Default account:", acc.Profile.Username)
-	return nil
+	return o.app.Present(&appModel.Account{
+		UUID:     acc.UUID,
+		Username: acc.Profile.Username,
+	})
 }
 
-func setDefaultAccount(m account.Manager, newValue string) error {
-	acc := m.GetAccount(newValue, account.ModeUUID|account.ModeName)
+func (o *defaultAccountOpts) setDefault(args []string) error {
+	accountManager := o.app.AccountManager()
+
+	// Validate new account
+	acc := accountManager.GetAccount(args[0], account.ModeUUID|account.ModeName)
 	if acc == nil {
-		//todo error cases like this need to exit with code 1
-		println("No account with name:", newValue)
+		return fmt.Errorf("no such account: %s", args[0])
 	}
 
-	if err := m.SetDefault(acc.UUID); err != nil {
+	// Update and save
+	if err := accountManager.SetDefault(acc.UUID); err != nil {
 		return err
 	}
-
-	if err := m.Save(); err != nil {
-		return err
-	}
-
-	return nil
+	return accountManager.Save()
 }

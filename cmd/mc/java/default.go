@@ -3,8 +3,9 @@ package java
 import (
 	"fmt"
 
+	"github.com/mworzala/mc-cli/internal/pkg/app"
+
 	"github.com/mworzala/mc-cli/internal/pkg/java"
-	"github.com/mworzala/mc-cli/internal/pkg/platform"
 	"github.com/spf13/cobra"
 )
 
@@ -16,21 +17,13 @@ var defaultCmd = &cobra.Command{
 	RunE:    handleDefault,
 }
 
-func handleDefault(_ *cobra.Command, args []string) (err error) {
-	dataDir, err := platform.GetConfigDir()
-	if err != nil {
-		return err
-	}
-
-	manager, err := java.NewManager(dataDir)
-	if err != nil {
-		return fmt.Errorf("failed to read accounts: %w", err)
-	}
+func handleDefault(cmd *cobra.Command, args []string) (err error) {
+	a := app.NewApp(cmd)
 
 	if len(args) == 0 {
-		return showDefaultInstallation(manager)
+		return showDefaultInstallation(a.JavaManager())
 	}
-	return setDefaultInstallation(manager, args[0])
+	return setDefaultInstallation(a.JavaManager(), args[0])
 }
 
 func showDefaultInstallation(m java.Manager) error {

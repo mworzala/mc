@@ -13,7 +13,14 @@ import (
 )
 
 const (
-	versionManifestUrl  = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
+	//todo there is a v2 of this endpoint, should switch to it
+	versionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
+	//todo fabric has this list of experimental endpoints, could query it
+	// https://maven.fabricmc.net/net/minecraft/experimental_versions.json
+
+	// Fabric supported game versions https://meta.fabricmc.net/v2/versions/game
+	// Fabric supported loader versions https://meta.fabricmc.net/v2/versions/loader
+
 	versionManifestFile = "versions.json"
 )
 
