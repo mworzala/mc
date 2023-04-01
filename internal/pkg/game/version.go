@@ -10,106 +10,239 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	gameModel "github.com/mworzala/mc-cli/internal/pkg/game/model"
 )
 
 const (
-	//todo there is a v2 of this endpoint, should switch to it
-	versionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
-	//todo fabric has this list of experimental endpoints, could query it
-	// https://maven.fabricmc.net/net/minecraft/experimental_versions.json
+	// Vanilla
+	versionManifestUrl             = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
+	experimentalVersionManifestUrl = "https://maven.fabricmc.net/net/minecraft/experimental_versions.json"
 
-	// Fabric supported game versions https://meta.fabricmc.net/v2/versions/game
-	// Fabric supported loader versions https://meta.fabricmc.net/v2/versions/loader
+	// Fabric
+	fabricVersionManifestUrl = "https://meta.fabricmc.net/v2/versions/game"
+	fabricLoaderManifestUrl  = "https://meta.fabricmc.net/v2/versions/loader"
+	fabricVersionSpecBaseUrl = "https://meta.fabricmc.net/v2/versions/loader"
 
-	versionManifestFile = "versions.json"
+	versionManifestV2File = "versions_v2.json"
+)
+
+var (
+	ErrUnknownVersion       = errors.New("unknown version")
+	ErrUnknownFabricVersion = errors.New("unknown fabric version")
+	ErrUnknownFabricLoader  = errors.New("unknown fabric loader")
 )
 
 type (
-	VersionManifest struct {
-		LastUpdated time.Time `json:"lastUpdated"`
-		Latest      struct {
+	VersionManifestV2 struct {
+		LastUpdated time.Time
+		Vanilla     struct {
+			Release  string
+			Snapshot string
+			// Mapping of Minecraft version to version json url
+			Versions map[string]*gameModel.VersionInfo
+		}
+		Fabric struct {
+			// Versions matrix is a mapping of Minecraft version to fabric support
+			// The entries in here are partial, and should not be used as is
+			Versions      map[string]*gameModel.VersionInfo
+			DefaultLoader string
+			Loaders       map[string]bool
+		}
+	}
+
+	// Response from versionManifestUrl and experimentalVersionManifestUrl
+	mojangVersionManifestV2 struct {
+		Latest *struct {
 			Release  string `json:"release"`
 			Snapshot string `json:"snapshot"`
 		}
-		Versions []*VersionInfo
+		Versions []struct {
+			Id          string    `json:"id"`
+			ReleaseTime time.Time `json:"releaseTime"`
+			Time        time.Time `json:"time"`
+			Type        string    `json:"type"`
+			Url         string    `json:"url"`
+		} `json:"versions"`
 	}
-	VersionInfo struct {
-		Id          string    `json:"id"`
-		ReleaseTime time.Time `json:"releaseTime"`
-		Time        time.Time `json:"time"`
-		Type        string    `json:"type"`
-		Url         string    `json:"url"`
+	// Response from fabricVersionManifestUrl
+	fabricVersionManifestV2 []struct {
+		Version string `json:"version"`
+		Stable  bool   `json:"stable"`
+	}
+	// Response from fabricLoaderManifestUrl
+	fabricLoaderManifestV2 []struct {
+		Separator string `json:"separator"`
+		Build     int    `json:"build"`
+		Maven     string `json:"maven"`
+		Version   string `json:"version"`
+		Stable    bool   `json:"stable"`
 	}
 )
 
 // Version manager
 
 type VersionManager struct {
-	Manifest *VersionManifest
+	cacheFile  string
+	manifestV2 *VersionManifestV2
 }
 
 func NewVersionManager(dataDir string) (*VersionManager, error) {
-	versionsFile := path.Join(dataDir, versionManifestFile)
+	cacheFile := path.Join(dataDir, versionManifestV2File)
+	m := &VersionManager{cacheFile: cacheFile}
 
-	var manifest VersionManifest
-	if _, err := os.Stat(versionsFile); errors.Is(err, fs.ErrNotExist) {
-		//todo downloading the manifest should show a loading indicator in the cli
-		println("downloading manifest")
-
-		// Download the manifest
-		manifest, err = downloadVersionManifest(versionsFile)
-		if err != nil {
+	if _, err := os.Stat(cacheFile); errors.Is(err, fs.ErrNotExist) {
+		if err := m.updateManifest(); err != nil {
 			return nil, err
 		}
 	} else {
-		// Load the manifest
-		f, err := os.Open(versionsFile)
+		f, err := os.Open(cacheFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open version manifest file: %w", err)
 		}
 		defer f.Close()
 
+		var manifest VersionManifestV2
 		if err := json.NewDecoder(f).Decode(&manifest); err != nil {
 			return nil, fmt.Errorf("failed to read version manifest: %w", err)
 		}
+		m.manifestV2 = &manifest
 	}
 
-	return &VersionManager{
-		Manifest: &manifest,
+	//todo update if old
+
+	return m, nil
+}
+
+func (m *VersionManager) FindVanilla(name string) (*gameModel.VersionInfo, error) {
+	v, ok := m.manifestV2.Vanilla.Versions[strings.ToLower(name)]
+	if !ok {
+		return nil, ErrUnknownVersion
+	}
+	return v, nil
+}
+
+func (m *VersionManager) FindFabric(name, loader string) (*gameModel.VersionInfo, error) {
+	if !m.FabricLoaderExists(loader) {
+		return nil, ErrUnknownFabricLoader
+	}
+
+	partial, ok := m.manifestV2.Fabric.Versions[strings.ToLower(name)]
+	if !ok {
+		return nil, ErrUnknownFabricVersion
+	}
+
+	return &gameModel.VersionInfo{
+		Id:     fmt.Sprintf(partial.Id, loader),
+		Stable: partial.Stable,
+		Url:    fmt.Sprintf(partial.Url, loader),
 	}, nil
 }
 
-func (m *VersionManager) FindVersionByName(name string) *VersionInfo {
-	name = strings.ToLower(name)
-	for _, version := range m.Manifest.Versions {
-		if version.Id == name {
-			return version
-		}
-	}
-	return nil
+func (m *VersionManager) DefaultFabricLoader() string {
+	return m.manifestV2.Fabric.DefaultLoader
 }
 
-func downloadVersionManifest(path string) (manifest VersionManifest, err error) {
-	res, err := http.Get(versionManifestUrl)
-	if err != nil {
-		return manifest, fmt.Errorf("failed to get version manifest: %w", err)
-	}
-	defer res.Body.Close()
+func (m *VersionManager) FabricLoaderExists(name string) bool {
+	_, ok := m.manifestV2.Fabric.Loaders[strings.ToLower(name)]
+	return ok
+}
 
-	if err := json.NewDecoder(res.Body).Decode(&manifest); err != nil {
-		return manifest, fmt.Errorf("failed to Download version manifest: %w", err)
-	}
-	manifest.LastUpdated = time.Now()
+func (m *VersionManager) updateManifest() error {
+	var result VersionManifestV2
+	result.LastUpdated = time.Now()
+	result.Vanilla.Versions = make(map[string]*gameModel.VersionInfo)
+	result.Fabric.Versions = make(map[string]*gameModel.VersionInfo)
+	result.Fabric.Loaders = make(map[string]bool)
 
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+	updateMojangManifest := func(url string) error {
+		res, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+
+		var manifest mojangVersionManifestV2
+		if err := json.NewDecoder(res.Body).Decode(&manifest); err != nil {
+			return err
+		}
+
+		if manifest.Latest != nil {
+			result.Vanilla.Release = manifest.Latest.Release
+			result.Vanilla.Snapshot = manifest.Latest.Snapshot
+		}
+		for _, v := range manifest.Versions {
+			result.Vanilla.Versions[v.Id] = &gameModel.VersionInfo{
+				Id:     v.Id,
+				Stable: v.Type == "release",
+				Url:    v.Url,
+			}
+		}
+
+		return nil
+	}
+
+	// Pull vanilla and experimental manifests
+	if err := updateMojangManifest(versionManifestUrl); err != nil {
+		return fmt.Errorf("failed to update mojang manifest: %w", err)
+	}
+	if err := updateMojangManifest(experimentalVersionManifestUrl); err != nil {
+		return fmt.Errorf("failed to update experimental manifest: %w", err)
+	}
+
+	// Pull fabric loader manifest
+	{
+		res, err := http.Get(fabricLoaderManifestUrl)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+
+		var manifest fabricLoaderManifestV2
+		if err := json.NewDecoder(res.Body).Decode(&manifest); err != nil {
+			return err
+		}
+
+		for _, v := range manifest {
+			if v.Stable && result.Fabric.DefaultLoader == "" {
+				result.Fabric.DefaultLoader = v.Version
+			}
+			result.Fabric.Loaders[v.Version] = v.Stable
+		}
+	}
+
+	// Pull fabric versions
+	{
+		res, err := http.Get(fabricVersionManifestUrl)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+
+		var manifest fabricVersionManifestV2
+		if err := json.NewDecoder(res.Body).Decode(&manifest); err != nil {
+			return err
+		}
+
+		for _, v := range manifest {
+			result.Fabric.Versions[v.Version] = &gameModel.VersionInfo{
+				Id:     fmt.Sprintf("fabric-loader-%%s-%s", v.Version),
+				Stable: v.Stable,
+				Url:    fmt.Sprintf("%s/%s/%%s/profile/json", fabricVersionSpecBaseUrl, v.Version),
+			}
+		}
+	}
+
+	f, err := os.OpenFile(m.cacheFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
-		return manifest, fmt.Errorf("failed to open version manifest file: %w", err)
+		return err
 	}
 	defer f.Close()
 
-	if err := json.NewEncoder(f).Encode(&manifest); err != nil {
-		return manifest, fmt.Errorf("failed to write version manifest file: %w", err)
+	if err := json.NewEncoder(f).Encode(&result); err != nil {
+		return err
 	}
 
-	return manifest, nil
+	m.manifestV2 = &result
+	return nil
 }

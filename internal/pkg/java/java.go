@@ -26,15 +26,16 @@ type Manager interface {
 	GetDefault() string
 	SetDefault(name string) error
 
+	Installations() []string
 	GetInstallation(name string) *Installation
 
 	Save() error
 }
 
 type fileManager struct {
-	Path          string                   `json:"-"`
-	Default       string                   `json:"default"`
-	Installations map[string]*Installation `json:"installs"`
+	Path     string                   `json:"-"`
+	Default  string                   `json:"default"`
+	Installs map[string]*Installation `json:"installs"`
 }
 
 func NewManager(dataDir string) (Manager, error) {
@@ -43,13 +44,12 @@ func NewManager(dataDir string) (Manager, error) {
 		installs := make(map[string]*Installation)
 
 		for _, i := range DefaultDiscoverMacOS() {
-			println("Discovered", i.Path, i.Arch)
 			installs[strings.ToLower(i.Name)] = i
 		}
 
 		return &fileManager{
-			Path:          javaFile,
-			Installations: installs,
+			Path:     javaFile,
+			Installs: installs,
 		}, nil
 	}
 
@@ -63,8 +63,8 @@ func NewManager(dataDir string) (Manager, error) {
 	if err := json.NewDecoder(f).Decode(&manager); err != nil {
 		return nil, fmt.Errorf("failed to read %s: %w", installsFileName, err)
 	}
-	if manager.Installations == nil {
-		manager.Installations = make(map[string]*Installation)
+	if manager.Installs == nil {
+		manager.Installs = make(map[string]*Installation)
 	}
 	return &manager, nil
 }
@@ -75,7 +75,7 @@ func (m *fileManager) GetDefault() string {
 
 func (m *fileManager) SetDefault(name string) error {
 	name = strings.ToLower(name)
-	if _, ok := m.Installations[name]; !ok {
+	if _, ok := m.Installs[name]; !ok {
 		return ErrInstallationNotFound
 	}
 
@@ -83,8 +83,15 @@ func (m *fileManager) SetDefault(name string) error {
 	return nil
 }
 
+func (m *fileManager) Installations() (result []string) {
+	for k := range m.Installs {
+		result = append(result, k)
+	}
+	return
+}
+
 func (m *fileManager) GetInstallation(name string) *Installation {
-	return m.Installations[strings.ToLower(name)]
+	return m.Installs[strings.ToLower(name)]
 }
 
 func (m *fileManager) Save() error {

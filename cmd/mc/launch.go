@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mworzala/mc-cli/internal/pkg/account"
-	"github.com/mworzala/mc-cli/internal/pkg/game"
+	"github.com/mworzala/mc-cli/internal/pkg/game/launch"
 	"github.com/mworzala/mc-cli/internal/pkg/java"
 	"github.com/mworzala/mc-cli/internal/pkg/platform"
 	"github.com/mworzala/mc-cli/internal/pkg/profile"
@@ -50,6 +50,6 @@ func handleLaunch(_ *cobra.Command, args []string) error {
 
 	acc := accountManager.GetAccount(accountManager.GetDefault(), account.ModeUUID)
 
-	return game.LaunchProfile(dataDir, p, acc, javaInstall)
+	return launch.LaunchProfile(dataDir, p, acc, javaInstall)
 
 }

@@ -34,7 +34,7 @@ func ParseFormat(s string) (Format, error) {
 	eqChar := strings.IndexRune(s, '=')
 	if eqChar == -1 {
 		switch strings.ToLower(s) {
-		case string(Default):
+		case string(Default), "":
 			return Format{Default, ""}, nil
 		case string(JSON):
 			return Format{JSON, ""}, nil

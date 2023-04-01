@@ -1,13 +1,18 @@
 package java
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/mworzala/mc-cli/internal/pkg/cli"
+	"github.com/spf13/cobra"
+)
 
-var Cmd = &cobra.Command{
-	Use:   "java",
-	Short: "Manage java installations",
-}
+func NewJavaCmd(app *cli.App) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "java",
+		Short: "Manage java installations",
+	}
 
-func init() {
-	Cmd.AddCommand(listCmd)
-	Cmd.AddCommand(defaultCmd)
+	cmd.AddCommand(newListCmd(app))
+	cmd.AddCommand(newDefaultCmd(app))
+
+	return cmd
 }

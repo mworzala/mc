@@ -1,61 +1,81 @@
 package java
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/mworzala/mc-cli/internal/pkg/app"
-
-	"github.com/mworzala/mc-cli/internal/pkg/java"
+	appModel "github.com/mworzala/mc-cli/internal/pkg/app/model"
+	"github.com/mworzala/mc-cli/internal/pkg/cli"
 	"github.com/spf13/cobra"
 )
 
-var defaultCmd = &cobra.Command{
-	Use:     "default",
-	Aliases: []string{"use"},
-	Short:   "Get or set the default java installation",
-	Args:    cobra.MaximumNArgs(1),
-	RunE:    handleDefault,
+type defaultJavaOpts struct {
+	app *cli.App
 }
 
-func handleDefault(cmd *cobra.Command, args []string) (err error) {
-	a := app.NewApp(cmd)
+func newDefaultCmd(app *cli.App) *cobra.Command {
+	var o defaultJavaOpts
 
-	if len(args) == 0 {
-		return showDefaultInstallation(a.JavaManager())
+	cmd := &cobra.Command{
+		Use:     "default",
+		Aliases: []string{"use"},
+		Short:   "Get or set the default java installation",
+		Args:    cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			o.app = app
+
+			if len(args) == 0 {
+				return o.getDefault()
+			}
+			return o.setDefault(args)
+		},
 	}
-	return setDefaultInstallation(a.JavaManager(), args[0])
+
+	return cmd
 }
 
-func showDefaultInstallation(m java.Manager) error {
-	javaInstall := m.GetDefault()
-	if javaInstall == "" {
-		println("No java installations")
-		return nil
+func (o *defaultJavaOpts) getDefault() error {
+	javaManager := o.app.JavaManager()
+	installs := javaManager.Installations()
+	if len(installs) == 0 {
+		return errors.New("no java installations found")
 	}
 
-	install := m.GetInstallation(javaInstall)
+	// Read default installation
+	install := javaManager.GetInstallation(javaManager.GetDefault())
 	if install == nil {
-		return fmt.Errorf("no java installation with default name present: %s", javaInstall)
+		// In this case the default has been misconfigured because we know there is at least one installation, but yet the default does not exist.
+		// Correct the issue by resetting the default installation to the first known installation
+		if err := javaManager.SetDefault(installs[0]); err != nil {
+			return err
+		}
+		if err := javaManager.Save(); err != nil {
+			return err
+		}
+
+		// Now we know this is a safe call
+		install = javaManager.GetInstallation(javaManager.GetDefault())
 	}
 
-	println("Default java:", install.Path)
-	return nil
+	return o.app.Present(&appModel.JavaInstallation{
+		Name:    install.Name,
+		Path:    install.Path,
+		Version: install.Version,
+	})
 }
 
-func setDefaultInstallation(m java.Manager, newValue string) error {
-	install := m.GetInstallation(newValue)
+func (o *defaultJavaOpts) setDefault(args []string) error {
+	javaManager := o.app.JavaManager()
+
+	// Validate new installation existence
+	install := javaManager.GetInstallation(args[0])
 	if install == nil {
-		//todo error cases like this need to exit with code 1
-		println("No installation with name:", newValue)
+		return fmt.Errorf("no such java installation: %s", args[0])
 	}
 
-	if err := m.SetDefault(install.Name); err != nil {
+	// Update and save
+	if err := javaManager.SetDefault(install.Name); err != nil {
 		return err
 	}
-
-	if err := m.Save(); err != nil {
-		return err
-	}
-
-	return nil
+	return javaManager.Save()
 }

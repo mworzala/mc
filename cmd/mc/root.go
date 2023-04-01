@@ -28,43 +28,14 @@ func newRootCmd(app *cli.App) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "default", "json|yaml|template")
+	cmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "", "json|yaml|template")
 
-	cmd.AddCommand(launchCmd)
-	cmd.AddCommand(installCmd)
 	cmd.AddCommand(account.NewAccountCmd(app))
-	cmd.AddCommand(java.Cmd)
+	cmd.AddCommand(java.NewJavaCmd(app))
+	cmd.AddCommand(launchCmd)
+	cmd.AddCommand(newInstallCmd(app))
 
 	return cmd
-}
-
-//var (
-//	outputFlag string
-//)
-
-//func init() {
-//	rootCmd.PersistentFlags().StringVarP(&outputFlag, "output", "o", "", "json|yaml")
-//
-//	rootCmd.AddCommand(launchCmd)
-//	rootCmd.AddCommand(installCmd)
-//	rootCmd.AddCommand(account.Cmd)
-//	rootCmd.AddCommand(java.Cmd)
-//}
-
-func preSetupFlags(_ *cobra.Command, _ []string) error {
-
-	//	outputOverride, err := cmd.PersistentFlags().GetString("output")
-	//	if err != nil {
-	//		println("ROOT ERRR")
-	//		return err
-	//	}
-	//
-	//	outputOverride = strings.ToLower(outputOverride)
-	//	if _, ok := appModel.OutputFormatValidationMap[outputOverride]; !ok {
-	//		return fmt.Errorf("invalid output format: %s", outputOverride)
-	//	}
-
-	return nil
 }
 
 func main() {

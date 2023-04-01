@@ -3,8 +3,10 @@ package cli
 import (
 	"github.com/mworzala/mc-cli/internal/pkg/account"
 	"github.com/mworzala/mc-cli/internal/pkg/cli/output"
+	"github.com/mworzala/mc-cli/internal/pkg/game"
 	"github.com/mworzala/mc-cli/internal/pkg/java"
 	"github.com/mworzala/mc-cli/internal/pkg/platform"
+	"github.com/mworzala/mc-cli/internal/pkg/profile"
 )
 
 type App struct {
@@ -13,6 +15,8 @@ type App struct {
 
 	accountManager account.Manager
 	javaManager    java.Manager
+	versionManager *game.VersionManager
+	profileManager profile.Manager
 }
 
 func NewApp() *App {
@@ -49,4 +53,28 @@ func (a *App) JavaManager() java.Manager {
 	}
 
 	return a.javaManager
+}
+
+func (a *App) VersionManager() *game.VersionManager {
+	if a.versionManager == nil {
+		var err error
+		a.versionManager, err = game.NewVersionManager(a.ConfigDir)
+		if err != nil {
+			a.Fatal(err)
+		}
+	}
+
+	return a.versionManager
+}
+
+func (a *App) ProfileManager() profile.Manager {
+	if a.profileManager == nil {
+		var err error
+		a.profileManager, err = profile.NewManager(a.ConfigDir)
+		if err != nil {
+			a.Fatal(err)
+		}
+	}
+
+	return a.profileManager
 }
