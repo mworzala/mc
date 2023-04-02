@@ -13,6 +13,7 @@ func NewJavaCmd(app *cli.App) *cobra.Command {
 
 	cmd.AddCommand(newListCmd(app))
 	cmd.AddCommand(newDefaultCmd(app))
+	cmd.AddCommand(newDiscoverCommand(app))
 
 	return cmd
 }

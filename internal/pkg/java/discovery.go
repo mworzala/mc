@@ -12,20 +12,6 @@ import (
 	"strings"
 )
 
-func DefaultDiscoverMacOS() (result []*Installation) {
-
-	// $HOME/Library/Java/JavaVirtualMachines
-	if homeDir, err := os.UserHomeDir(); err == nil {
-		userLibraryInstalls := path.Join(homeDir, "Library/Java/JavaVirtualMachines")
-		for _, install := range discoverDirectory(userLibraryInstalls) {
-			result = append(result, install)
-		}
-	}
-
-	//todo the rest of this
-	return
-}
-
 func discoverDirectory(dir string) []*Installation {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -38,7 +24,7 @@ func discoverDirectory(dir string) []*Installation {
 			continue
 		}
 
-		execPath := path.Join(dir, entry.Name(), "Contents/Home/bin/java")
+		execPath := path.Join(dir, entry.Name(), javaExecSubPath)
 		if _, err := os.Stat(execPath); errors.Is(err, fs.ErrNotExist) {
 			continue
 		}

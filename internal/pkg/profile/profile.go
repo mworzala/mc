@@ -16,6 +16,7 @@ import (
 var (
 	ErrInvalidName = errors.New("invalid profile name")
 	ErrNameInUse   = errors.New("name in use")
+	ErrNotFound    = errors.New("profile not found")
 
 	namePattern = regexp.MustCompile("^[a-zA-Z0-9_.-]{1,32}$")
 )
@@ -30,7 +31,7 @@ type Manager interface {
 	// The returned profile may be modified, and then Save will save it.
 	CreateProfile(name string) (*Profile, error)
 
-	GetProfile(name string) *Profile
+	GetProfile(name string) (*Profile, error)
 
 	Save() error
 }
@@ -97,14 +98,14 @@ func (m *fileManager) CreateProfile(name string) (*Profile, error) {
 	return profile, nil
 }
 
-func (m *fileManager) GetProfile(name string) *Profile {
+func (m *fileManager) GetProfile(name string) (*Profile, error) {
 	name = strings.ToLower(name)
 	for id, p := range m.Profiles {
 		if id == name {
-			return p
+			return p, nil
 		}
 	}
-	return nil
+	return nil, ErrNotFound
 }
 
 func (m *fileManager) Save() error {

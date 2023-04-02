@@ -51,7 +51,7 @@ type VersionSpec struct {
 	} `json:"javaVersion"`
 	MainClass string `json:"mainClass"`
 	Assets    string `json:"assets"`
-	Arguments *struct {
+	Arguments struct {
 		Game []interface{} `json:"game"`
 		JVM  []interface{} `json:"jvm"`
 	} `json:"arguments"`
@@ -88,71 +88,3 @@ type AssetObject struct {
 	Hash string `json:"hash"`
 	Size int64  `json:"size"`
 }
-
-//func MergeSpec(spec, base *VersionSpec) *VersionSpec {
-//	var result VersionSpec
-//	if err := copier.Copy(&result, spec); err != nil {
-//		panic(err)
-//	}
-//
-//	if result.Id == "" {
-//		result.Id = base.Id
-//	}
-//
-//	if result.MinimumLauncherVersion == 0 {
-//		result.MinimumLauncherVersion = base.MinimumLauncherVersion
-//	}
-//
-//	if result.ComplianceLevel == 0 {
-//		result.ComplianceLevel = base.ComplianceLevel
-//	}
-//
-//	var zeroTime time.Time
-//	if result.ReleaseTime == zeroTime {
-//		result.ReleaseTime = base.ReleaseTime
-//	}
-//	if result.Time == zeroTime {
-//		result.Time = base.Time
-//	}
-//
-//	var emptyDownload util.FileDownload
-//	if result.Downloads.Client == emptyDownload {
-//		result.Downloads.Client = base.Downloads.Client
-//	}
-//	if result.Downloads.ClientMappings == emptyDownload {
-//		result.Downloads.ClientMappings = base.Downloads.ClientMappings
-//	}
-//	if result.Downloads.Server == emptyDownload {
-//		result.Downloads.Server = base.Downloads.Server
-//	}
-//	if result.Downloads.ServerMappings == emptyDownload {
-//		result.Downloads.ServerMappings = base.Downloads.ServerMappings
-//	}
-//
-//	result.Libraries = append(result.Libraries, base.Libraries...)
-//
-//	if result.AssetIndex.Id == "" {
-//		result.AssetIndex = base.AssetIndex
-//	}
-//
-//	if result.Logging.Client.File.Id == "" {
-//		result.Logging = base.Logging
-//	}
-//
-//	if result.JavaVersion.MajorVersion == 0 {
-//		result.JavaVersion = base.JavaVersion
-//	}
-//
-//	if result.MainClass == "" {
-//		result.MainClass = base.MainClass
-//	}
-//
-//	if result.Assets == "" {
-//		result.Assets = base.Assets
-//	}
-//
-//	result.Arguments.Game = append(result.Arguments.Game, base.Arguments.Game...)
-//	result.Arguments.JVM = append(result.Arguments.JVM, base.Arguments.JVM...)
-//
-//	return &result
-//}

@@ -3,53 +3,52 @@ package main
 import (
 	"fmt"
 
+	"github.com/mworzala/mc-cli/internal/pkg/cli"
+
 	"github.com/mworzala/mc-cli/internal/pkg/account"
 	"github.com/mworzala/mc-cli/internal/pkg/game/launch"
-	"github.com/mworzala/mc-cli/internal/pkg/java"
-	"github.com/mworzala/mc-cli/internal/pkg/platform"
-	"github.com/mworzala/mc-cli/internal/pkg/profile"
 	"github.com/spf13/cobra"
 )
 
-var launchCmd = &cobra.Command{
-	Aliases: []string{"launch", "run"},
-	RunE:    handleLaunch,
+type launchOpts struct {
+	app *cli.App
 }
 
-func handleLaunch(_ *cobra.Command, args []string) error {
+func newLaunchCmd(app *cli.App) *cobra.Command {
+	var o launchOpts
 
-	dataDir, err := platform.GetConfigDir()
+	cmd := &cobra.Command{
+		Aliases: []string{"launch", "run"},
+		Args:    cobra.ExactArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			o.app = app
+			return o.launch(args)
+		},
+	}
+
+	return cmd
+}
+
+func (o *launchOpts) launch(args []string) error {
+
+	profileManager := o.app.ProfileManager()
+	p, err := profileManager.GetProfile(args[0])
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", err, args[0])
 	}
 
-	profileManager, err := profile.NewManager(dataDir)
-	if err != nil {
-		return err
-	}
-
-	p := profileManager.GetProfile("1.19.2")
-	if p == nil {
-		panic("not installed")
-	}
-
-	accountManager, err := account.NewManager(dataDir)
-	if err != nil {
-		return err
-	}
-
-	javaManager, err := java.NewManager(dataDir)
-	if err != nil {
-		return err
-	}
-	defaultJava := javaManager.GetDefault()
-	if defaultJava == "" {
-		return fmt.Errorf("a default java must be configured.")
-	}
-	javaInstall := javaManager.GetInstallation(defaultJava)
-
+	accountManager := o.app.AccountManager()
 	acc := accountManager.GetAccount(accountManager.GetDefault(), account.ModeUUID)
+	if acc == nil {
+		return fmt.Errorf("no default account is set")
+	}
 
-	return launch.LaunchProfile(dataDir, p, acc, javaInstall)
+	javaManager := o.app.JavaManager()
+	javaInstall := javaManager.GetInstallation(javaManager.GetDefault())
+	if javaInstall == nil {
+		return fmt.Errorf("no default java installation is set")
+	}
+
+	return launch.LaunchProfile(o.app.ConfigDir, p, acc, javaInstall)
 
 }

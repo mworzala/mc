@@ -26,6 +26,8 @@ type Manager interface {
 	GetDefault() string
 	SetDefault(name string) error
 
+	Discover(name string) (*Installation, error)
+
 	Installations() []string
 	GetInstallation(name string) *Installation
 
@@ -43,7 +45,7 @@ func NewManager(dataDir string) (Manager, error) {
 	if _, err := os.Stat(javaFile); errors.Is(err, fs.ErrNotExist) {
 		installs := make(map[string]*Installation)
 
-		for _, i := range DefaultDiscoverMacOS() {
+		for _, i := range discoverKnownPaths() {
 			installs[strings.ToLower(i.Name)] = i
 		}
 
@@ -81,6 +83,16 @@ func (m *fileManager) SetDefault(name string) error {
 
 	m.Default = name
 	return nil
+}
+
+func (m *fileManager) Discover(exec string) (*Installation, error) {
+	install, err := DiscoverJava(exec, "")
+	if err != nil {
+		return nil, err
+	}
+
+	m.Installs[strings.ToLower(install.Name)] = install
+	return install, err
 }
 
 func (m *fileManager) Installations() (result []string) {

@@ -21,7 +21,7 @@ type FileDownload struct {
 
 func ReadOrDownload(id, file string, dl FileDownload, ptr interface{}) error {
 	if _, err := os.Stat(file); err == nil {
-		return readFile(file, ptr)
+		return ReadFile(file, ptr)
 	} else if errors.Is(err, fs.ErrNotExist) {
 		data := new(bytes.Buffer)
 
@@ -88,7 +88,7 @@ func downloadFile(file string, download FileDownload, listeners ...io.Writer) er
 	return nil
 }
 
-func readFile(file string, ptr interface{}) error {
+func ReadFile(file string, ptr interface{}) error {
 	f, err := os.Open(file)
 	if err != nil {
 		return err

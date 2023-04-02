@@ -32,7 +32,7 @@ func newRootCmd(app *cli.App) *cobra.Command {
 
 	cmd.AddCommand(account.NewAccountCmd(app))
 	cmd.AddCommand(java.NewJavaCmd(app))
-	cmd.AddCommand(launchCmd)
+	cmd.AddCommand(newLaunchCmd(app))
 	cmd.AddCommand(newInstallCmd(app))
 
 	return cmd
