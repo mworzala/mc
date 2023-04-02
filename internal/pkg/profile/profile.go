@@ -9,8 +9,6 @@ import (
 	"path"
 	"regexp"
 	"strings"
-
-	"github.com/mworzala/mc-cli/internal/pkg/platform"
 )
 
 var (
@@ -41,17 +39,19 @@ var (
 )
 
 type fileManager struct {
-	Path     string              `json:"-"`
-	Default  string              `json:"default"`
-	Profiles map[string]*Profile `json:"profiles"`
+	Path        string `json:"-"`
+	profilesDir string
+	Default     string              `json:"default"`
+	Profiles    map[string]*Profile `json:"profiles"`
 }
 
 func NewManager(dataDir string) (Manager, error) {
 	profilesFile := path.Join(dataDir, profilesFileName)
 	if _, err := os.Stat(profilesFile); errors.Is(err, fs.ErrNotExist) {
 		return &fileManager{
-			Path:     profilesFile,
-			Profiles: make(map[string]*Profile),
+			Path:        profilesFile,
+			profilesDir: path.Join(dataDir, "profiles"),
+			Profiles:    make(map[string]*Profile),
 		}, nil
 	}
 
@@ -61,7 +61,7 @@ func NewManager(dataDir string) (Manager, error) {
 	}
 	defer f.Close()
 
-	manager := fileManager{Path: profilesFile}
+	manager := fileManager{Path: profilesFile, profilesDir: path.Join(dataDir, "profiles")}
 	if err := json.NewDecoder(f).Decode(&manager); err != nil {
 		return nil, fmt.Errorf("failed to read %s: %w", profilesFileName, err)
 	}
@@ -79,11 +79,7 @@ func (m *fileManager) CreateProfile(name string) (*Profile, error) {
 		return nil, ErrNameInUse
 	}
 
-	configDir, err := platform.GetConfigDir()
-	if err != nil {
-		return nil, err
-	}
-	dataDir := path.Join(configDir, "profiles", name)
+	dataDir := path.Join(m.profilesDir, name)
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create profile data directory: %w", err)
 	}

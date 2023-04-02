@@ -16,10 +16,19 @@ import (
 // if the config directory cannot be found.
 //
 // If the directory does not exist, it will be created.
-func GetConfigDir() (string, error) {
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return "", err
+func GetConfigDir(indev bool) (string, error) {
+	var err error
+	var configDir string
+	if indev {
+		configDir, err = os.Getwd()
+		if err != nil {
+			return "", err
+		}
+	} else {
+		configDir, err = os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
 	}
 
 	dataDir := path.Join(configDir, "mc-cli")

@@ -1,5 +1,9 @@
+# ide data
 .idea
-temp
-/mc
 
+# local build data
+/mc
+mc-cli/
+
+# release data
 dist/
