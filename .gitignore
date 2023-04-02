@@ -1,3 +1,5 @@
 .idea
 temp
 /mc
+
+dist/

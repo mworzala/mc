@@ -3,6 +3,7 @@ module github.com/mworzala/mc-cli
 go 1.19
 
 require (
+	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/gosuri/uitable v0.0.4
 	github.com/spf13/cobra v1.6.1

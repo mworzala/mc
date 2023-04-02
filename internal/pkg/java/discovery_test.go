@@ -6,10 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDiscoveryTest(t *testing.T) {
-	DiscoveryTest()
-}
-
 func TestExtractParams(t *testing.T) {
 	sample := `Property settings:
 file.encoding = UTF-8

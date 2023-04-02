@@ -1,8 +1,7 @@
-package main
+package mc
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/mworzala/mc-cli/cmd/mc/account"
 	"github.com/mworzala/mc-cli/cmd/mc/java"
@@ -14,12 +13,12 @@ import (
 var longDescription = `Blah blah blah need to write a longer description
 it can have newlines as well :O`
 
-func newRootCmd(app *cli.App) *cobra.Command {
+func NewRootCmd(app *cli.App) *cobra.Command {
 	var outputFormat string
 
 	cmd := &cobra.Command{
 		Use:     "mc",
-		Version: "0.1.1",
+		Version: fmt.Sprintf("%s+%s", app.Build.Version, app.Build.Commit[0:6]),
 		Short:   "mc is a Minecraft installer and launcher",
 		Long:    longDescription,
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) (err error) {
@@ -28,22 +27,15 @@ func newRootCmd(app *cli.App) *cobra.Command {
 		},
 	}
 
+	cmd.SetVersionTemplate(`{{printf "%s" .Version}}`)
+
 	cmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "", "json|yaml|template")
 
 	cmd.AddCommand(account.NewAccountCmd(app))
 	cmd.AddCommand(java.NewJavaCmd(app))
 	cmd.AddCommand(newLaunchCmd(app))
 	cmd.AddCommand(newInstallCmd(app))
+	cmd.AddCommand(newVersionCmd(app))
 
 	return cmd
-}
-
-func main() {
-	app := cli.NewApp()
-	rootCmd := newRootCmd(app)
-
-	if err := rootCmd.Execute(); err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 }

@@ -9,7 +9,16 @@ import (
 	"github.com/mworzala/mc-cli/internal/pkg/profile"
 )
 
+type BuildInfo struct {
+	Version  string
+	Commit   string
+	Date     string
+	Modified bool
+}
+
 type App struct {
+	Build BuildInfo
+
 	ConfigDir string
 	Output    output.Format
 
@@ -19,16 +28,16 @@ type App struct {
 	profileManager profile.Manager
 }
 
-func NewApp() *App {
-	configDir, err := platform.GetConfigDir()
-	if err != nil {
+func NewApp(build BuildInfo) *App {
+	a := &App{Build: build}
 
+	var err error
+	if a.ConfigDir, err = platform.GetConfigDir(); err != nil {
+		a.Fatal(err)
 	}
 
-	return &App{
-		ConfigDir: configDir,
-		Output:    output.Format{Type: output.Default},
-	}
+	a.Output = output.Format{Type: output.Default}
+	return a
 }
 
 func (a *App) AccountManager() account.Manager {

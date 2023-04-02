@@ -1,4 +1,4 @@
-package main
+package mc
 
 import (
 	"fmt"
