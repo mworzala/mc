@@ -18,14 +18,15 @@ otherwise it is a literal string
 
 - `mc java default|use` - Show the current default java installation to be used
 - `mc java default|use <name>` - Set the default installation
-- ! `mc java list` - List all discovered java installations
+- `mc java list` - List all discovered java installations
+- `mc java discover <path-to-exe> [--set-default]` - Discover a preinstalled java version
 - ! `mc java add <path-to-exe> [name]` - Discover a new java installation with the given path, optionally with the given name. If the name is not specified, one will be generated.
 - !! `mc java install <version> [name]` - Install a new java dedicated to Minecraft
 
 ### Profile management
 
 - `mc install <mc-version> [name]` - Install vanilla minecraft (profile will be named as version if unspecified)
-- `mc install <mc-version> [name] --fabric [loader-version]` - Install fabric, todo can a string arg have an optional value?
+- `mc install <mc-version> [name] --fabric [--loader loader-version]` - Install fabric
 - `mc run <profile>` - Launch a profile immediately
 
 ### Config management
@@ -43,3 +44,7 @@ autolink.servers = bool
 autolink.saves = bool
 autolink.resourcepacks = bool
 ```
+
+## Building from source
+
+`go build -o mc cmd/mc/*.go`
