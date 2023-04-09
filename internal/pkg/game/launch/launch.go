@@ -129,7 +129,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, jav
 	cmd := exec.Command(javaInstall.Path, args...)
 	cmd.Dir = p.Directory
 
-	tail := false
+	tail := true
 
 	if tail {
 		cmd.Stdout = os.Stdout

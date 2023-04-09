@@ -18,7 +18,8 @@ func newLaunchCmd(app *cli.App) *cobra.Command {
 	var o launchOpts
 
 	cmd := &cobra.Command{
-		Aliases: []string{"launch", "run"},
+		Use:     "launch",
+		Aliases: []string{"run"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
 			o.app = app

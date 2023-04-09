@@ -16,9 +16,14 @@ it can have newlines as well :O`
 func NewRootCmd(app *cli.App) *cobra.Command {
 	var outputFormat string
 
+	versionStr := "dev"
+	if app.Build.Commit != "none" {
+		versionStr = fmt.Sprintf("%s+%s", app.Build.Version, app.Build.Commit[0:6])
+	}
+
 	cmd := &cobra.Command{
 		Use:     "mc",
-		Version: fmt.Sprintf("%s+%s", app.Build.Version, app.Build.Commit[0:6]),
+		Version: versionStr,
 		Short:   "mc is a Minecraft installer and launcher",
 		Long:    longDescription,
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) (err error) {
