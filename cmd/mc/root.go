@@ -3,6 +3,8 @@ package mc
 import (
 	"fmt"
 
+	"github.com/mworzala/mc-cli/cmd/mc/profile"
+
 	"github.com/mworzala/mc-cli/cmd/mc/account"
 	"github.com/mworzala/mc-cli/cmd/mc/java"
 	"github.com/mworzala/mc-cli/internal/pkg/cli"
@@ -38,6 +40,7 @@ func NewRootCmd(app *cli.App) *cobra.Command {
 
 	cmd.AddCommand(account.NewAccountCmd(app))
 	cmd.AddCommand(java.NewJavaCmd(app))
+	cmd.AddCommand(profile.NewProfileCmd(app))
 	cmd.AddCommand(newLaunchCmd(app))
 	cmd.AddCommand(newInstallCmd(app))
 	cmd.AddCommand(newVersionCmd(app))

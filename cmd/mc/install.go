@@ -64,13 +64,11 @@ func (o *installOpts) validateArgs(cmd *cobra.Command, args []string) (err error
 	// Validate flag fabric (and loader)
 	// If fabric is present ensure the selected version is supported, if loader is specified use that
 	if o.fabric {
-		println("fabric")
 		if o.fabricLoader == "" {
 			o.fabricLoader = versionManager.DefaultFabricLoader()
 		}
 
 		o.version, err = versionManager.FindFabric(args[0], o.fabricLoader)
-		println("fab v", o.version.Url)
 		if errors.Is(err, game.ErrUnknownFabricVersion) {
 			return fmt.Errorf("%w: %s", err, args[0])
 		}
@@ -96,6 +94,9 @@ func (o *installOpts) installSelected(args []string) error {
 	profileManager := o.app.ProfileManager()
 
 	profileName := args[0]
+	if o.fabric {
+		profileName = fmt.Sprintf("%s-fabric", profileName)
+	}
 	if len(args) > 1 {
 		profileName = args[1]
 	}
@@ -105,6 +106,9 @@ func (o *installOpts) installSelected(args []string) error {
 	}
 
 	p.Type = profile.Vanilla
+	if o.fabric {
+		p.Type = profile.Fabric
+	}
 	p.Version = o.version.Id
 
 	if err := profileManager.Save(); err != nil {

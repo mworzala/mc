@@ -29,6 +29,7 @@ type Manager interface {
 	// The returned profile may be modified, and then Save will save it.
 	CreateProfile(name string) (*Profile, error)
 
+	Profiles() []string
 	GetProfile(name string) (*Profile, error)
 
 	Save() error
@@ -42,7 +43,7 @@ type fileManager struct {
 	Path        string `json:"-"`
 	profilesDir string
 	Default     string              `json:"default"`
-	Profiles    map[string]*Profile `json:"profiles"`
+	AllProfiles map[string]*Profile `json:"profiles"`
 }
 
 func NewManager(dataDir string) (Manager, error) {
@@ -51,7 +52,7 @@ func NewManager(dataDir string) (Manager, error) {
 		return &fileManager{
 			Path:        profilesFile,
 			profilesDir: path.Join(dataDir, "profiles"),
-			Profiles:    make(map[string]*Profile),
+			AllProfiles: make(map[string]*Profile),
 		}, nil
 	}
 
@@ -65,8 +66,8 @@ func NewManager(dataDir string) (Manager, error) {
 	if err := json.NewDecoder(f).Decode(&manager); err != nil {
 		return nil, fmt.Errorf("failed to read %s: %w", profilesFileName, err)
 	}
-	if manager.Profiles == nil {
-		manager.Profiles = make(map[string]*Profile)
+	if manager.AllProfiles == nil {
+		manager.AllProfiles = make(map[string]*Profile)
 	}
 	return &manager, nil
 }
@@ -75,7 +76,7 @@ func (m *fileManager) CreateProfile(name string) (*Profile, error) {
 	if !IsValidName(name) {
 		return nil, ErrInvalidName
 	}
-	if _, ok := m.Profiles[strings.ToLower(name)]; ok {
+	if _, ok := m.AllProfiles[strings.ToLower(name)]; ok {
 		return nil, ErrNameInUse
 	}
 
@@ -90,13 +91,20 @@ func (m *fileManager) CreateProfile(name string) (*Profile, error) {
 		Directory: dataDir,
 	}
 
-	m.Profiles[strings.ToLower(name)] = profile
+	m.AllProfiles[strings.ToLower(name)] = profile
 	return profile, nil
+}
+
+func (m *fileManager) Profiles() (result []string) {
+	for name := range m.AllProfiles {
+		result = append(result, name)
+	}
+	return
 }
 
 func (m *fileManager) GetProfile(name string) (*Profile, error) {
 	name = strings.ToLower(name)
-	for id, p := range m.Profiles {
+	for id, p := range m.AllProfiles {
 		if id == name {
 			return p, nil
 		}

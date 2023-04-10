@@ -65,6 +65,7 @@ func (f Format) Write(out io.Writer, entry interface{}) (err error) {
 		} else {
 			_, err = out.Write([]byte(fmt.Sprintf("%#v", entry)))
 		}
+		_, _ = out.Write([]byte("\n"))
 	case JSON:
 		if err = json.NewEncoder(out).Encode(entry); err != nil {
 			err = fmt.Errorf("unable to write JSON output: %w", err)
@@ -78,7 +79,10 @@ func (f Format) Write(out io.Writer, entry interface{}) (err error) {
 		if err != nil {
 			return fmt.Errorf("unable to parse template: %w", err)
 		}
-		return t.Execute(out, entry)
+		if err := t.Execute(out, entry); err != nil {
+			return err
+		}
+		_, _ = out.Write([]byte("\n"))
 	default:
 		return ErrInvalidFormat
 	}

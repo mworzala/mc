@@ -8,6 +8,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/mworzala/mc-cli/internal/pkg/game/rule"
+
 	"github.com/mworzala/mc-cli/internal/pkg/account"
 	gameModel "github.com/mworzala/mc-cli/internal/pkg/game/model"
 	"github.com/mworzala/mc-cli/internal/pkg/java"
@@ -23,6 +25,8 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, jav
 		return err
 	}
 	if spec.InheritsFrom != "" {
+
+		//todo should move away from merging specs, it creates weird edge cases like the one below to choose the client jar
 		var inheritedSpec gameModel.VersionSpec
 		inheritedVersionSpecPath := path.Join(dataDir, "versions", spec.InheritsFrom, fmt.Sprintf("%s.json", spec.InheritsFrom))
 		if err := util.ReadFile(inheritedVersionSpecPath, &inheritedSpec); err != nil {
@@ -32,17 +36,37 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, jav
 		spec = *mergeSpec(&spec, &inheritedSpec)
 	}
 
+	rules := rule.NewEvaluator()
+
 	// Build classpath
 	classpath := strings.Builder{}
 	librariesPath := path.Join(dataDir, "libraries")
 
 	for _, lib := range spec.Libraries {
-		libPath := path.Join(librariesPath, lib.Downloads.Artifact.Path)
-		classpath.WriteString(libPath)
+		if rules.Eval(lib.Rules) == rule.Deny {
+			continue
+		}
+
+		if lib.Downloads != nil { // Vanilla-type library
+			libPath := path.Join(librariesPath, lib.Downloads.Artifact.Path)
+			classpath.WriteString(libPath)
+		} else if lib.Url != "" { // Direct maven library
+			parts := strings.Split(lib.Name, ":")
+			groupId := parts[0]
+			artifactName := parts[1]
+			version := parts[2]
+
+			artifactPath := fmt.Sprintf("%s/%s/%s/%s-%s.jar", strings.ReplaceAll(groupId, ".", "/"), artifactName, version, artifactName, version)
+			classpath.WriteString(path.Join(librariesPath, artifactPath))
+		}
 		classpath.WriteString(":")
 	}
 
-	classpath.WriteString(path.Join(dataDir, "versions", p.Version, fmt.Sprintf("%s.jar", p.Version)))
+	if spec.InheritsFrom != "" {
+		classpath.WriteString(path.Join(dataDir, "versions", spec.InheritsFrom, fmt.Sprintf("%s.jar", spec.InheritsFrom)))
+	} else {
+		classpath.WriteString(path.Join(dataDir, "versions", p.Version, fmt.Sprintf("%s.jar", p.Version)))
+	}
 
 	vars := map[string]string{
 		// jvm
@@ -157,6 +181,12 @@ func mergeSpec(spec, base *gameModel.VersionSpec) *gameModel.VersionSpec {
 		result.Id = spec.Id
 	} else {
 		result.Id = base.Id
+	}
+
+	if spec.InheritsFrom != "" {
+		result.InheritsFrom = spec.InheritsFrom
+	} else {
+		result.InheritsFrom = base.InheritsFrom
 	}
 
 	if spec.MinimumLauncherVersion != 0 {

@@ -51,5 +51,4 @@ func (o *launchOpts) launch(args []string) error {
 	}
 
 	return launch.LaunchProfile(o.app.ConfigDir, p, acc, javaInstall)
-
 }

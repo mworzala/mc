@@ -29,6 +29,14 @@ otherwise it is a literal string
 - `mc install <mc-version> [name] --fabric [--loader loader-version]` - Install fabric
 - `mc run <profile>` - Launch a profile immediately
 
+- ! `mc profile list`
+- ! `mc profile delete <name>`
+
+### Mod management (todo)
+All commands would have a `--profile`, `-p` arg to specify which profile is being edited.
+
+- `mc mod install`
+
 ### Config management
 maybe
 
