@@ -14,6 +14,7 @@ var (
 	commit   = "none"
 	date     = "unknown"
 	modified = false
+	source   = "no"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 		}
 	}
 
-	app := cli.NewApp(cli.BuildInfo{Version: version, Commit: commit, Date: date, Modified: modified})
+	app := cli.NewApp(cli.BuildInfo{Version: version, Commit: commit, Date: date, Modified: modified, Source: source == "yes"})
 	rootCmd := mc.NewRootCmd(app)
 
 	if err := rootCmd.Execute(); err != nil {

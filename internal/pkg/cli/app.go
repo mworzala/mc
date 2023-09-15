@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/mworzala/mc/internal/pkg/account"
@@ -18,6 +19,7 @@ type BuildInfo struct {
 	Commit   string
 	Date     string
 	Modified bool
+	Source   bool
 }
 
 type App struct {
@@ -38,7 +40,7 @@ func NewApp(build BuildInfo) *App {
 	a := &App{Build: build}
 
 	var err error
-	if a.ConfigDir, err = platform.GetConfigDir(false); err != nil {
+	if a.ConfigDir, err = platform.GetConfigDir(build.Source); err != nil {
 		a.Fatal(err)
 	}
 
@@ -61,7 +63,9 @@ func (a *App) readConfig() {
 	// Set default values
 	v.SetDefault("use_system_keyring", true)
 
-	if err := v.ReadInConfig(); err != nil {
+	err := v.ReadInConfig()
+	if err != nil && !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+		// For some reason viper doesnt implement Is() for ConfigFileNotFoundError
 		a.Fatal(err)
 	}
 	a.Config = &config.Config{}
