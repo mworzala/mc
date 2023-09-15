@@ -1,7 +1,7 @@
 package profile
 
 import (
-	"errors"
+	"os"
 	"path"
 
 	"github.com/spf13/viper"
@@ -35,10 +35,11 @@ func (p *Profile) Config() *Config {
 	v := viper.New()
 	v.SetConfigFile(path.Join(p.Directory, "config.json"))
 
-	err := v.ReadInConfig()
-	if err != nil && !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		// For some reason viper doesnt implement Is() for ConfigFileNotFoundError
-		panic(err) //todo
+	// Read the config file if it exists
+	if _, err := os.Stat(v.ConfigFileUsed()); err == nil {
+		if err := v.ReadInConfig(); err != nil {
+			panic(err) //todo this should proceed with default config and log an error
+		}
 	}
 
 	var config Config
