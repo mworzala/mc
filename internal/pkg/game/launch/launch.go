@@ -71,7 +71,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 	vars := map[string]string{
 		// jvm
 		"natives_directory": ".",
-		"launcher_name":     "mc-cli",
+		"launcher_name":     "mc",
 		"launcher_version":  "0.0.1",
 		"classpath":         classpath.String(),
 		// game

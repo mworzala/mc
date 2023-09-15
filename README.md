@@ -1,59 +1,48 @@
-# mc-cli
-todo write more here
+# Minecraft CLI (mc)
+A simple command line interface for managing and launching Minecraft instances, friendly to both users and automation/tooling.
 
+(insert fancy image here)
 
-## Command Spec
-`<>` indicates required arg
-`[]` indicates optional arg
-otherwise it is a literal string
+## Features
+todo
 
-### Account management
+Planned:
+- Mod management/auto update
+- Modpack installation
+- MultiMC/Prism integration (either autodetecting installations and using them, or importing instances)
+- Vanilla launcher integration (either autodetecting installations and using them, or importing instances)
+- Java installation based on requested version in manifest
+- Support for legacy launcher metadata formats (eg the ability to launch older Minecraft versions)
+- Forge support
+- Automatic synchronization of saves/resource packs/configs/servers between instances
 
-- `mc account default|use` - Show the current default account
-- `mc account default|use <username|uuid>` - Set the default account
-- `mc account login` - Login to a new account with Microsoft
-- `mc account token (username|uuid)` - Get an access token for the given account
-- `mc account list` - Show a list of all known accounts
+## Installation
 
-### Java management
+> ![WARNING]
+> Windows is not officially supported yet, but it may work. If you encounter any issues, please report them as an issue.
 
-- `mc java default|use` - Show the current default java installation to be used
-- `mc java default|use <name>` - Set the default installation
-- `mc java list` - List all discovered java installations
-- `mc java discover <path-to-exe> [--set-default]` - Discover a preinstalled java version
-- !! `mc java install <version> [name]` - Install a new java dedicated to Minecraft
+A prebuilt binary is available for macOS and Linux in the [releases](https://github.com/mworzala/mc/releases) tab.
 
-### Profile management
-
-- `mc install <mc-version> [name]` - Install vanilla minecraft (profile will be named as version if unspecified)
-- `mc install <mc-version> [name] --fabric [--loader loader-version]` - Install fabric
-- `mc run <profile>` - Launch a profile immediately
-- `mc profile list`
--
-- ! `mc profile delete <name>`
-- ! `mc profile config <name> [key] [value]`
-
-### Mod management (todo)
-All commands would have a `--profile`, `-p` arg to specify which profile is being edited.
-
-- `mc mod install`
-
-### Config management
-maybe
-
-## Configuration
-
-All subject to change, none of it is implemented
-
-```
-# Autolink options describe whether to symlink those resources between different instances
-# todo is this really viable?
-autolink.config = bool
-autolink.servers = bool
-autolink.saves = bool
-autolink.resourcepacks = bool
+### Go Install
+It is possible to install the latest version of `mc` using `go install`:
+```shell
+go install github.com/mworzala/mc@latest
 ```
 
-## Building from source
+### Building From Source
+It is possible to build `mc` from source as long as you have Make and Go installed.
 
-`make build`
+```shell
+make build
+```
+
+## Usage
+todo
+
+## Automation
+
+## Contributing
+todo
+
+## License
+This project is licensed under the [MIT](../LICENSE).
