@@ -5,13 +5,14 @@ import (
 
 	"github.com/mworzala/mc-cli/internal/pkg/cli"
 
-	"github.com/mworzala/mc-cli/internal/pkg/account"
 	"github.com/mworzala/mc-cli/internal/pkg/game/launch"
 	"github.com/spf13/cobra"
 )
 
 type launchOpts struct {
 	app *cli.App
+
+	tail bool
 }
 
 func newLaunchCmd(app *cli.App) *cobra.Command {
@@ -27,6 +28,8 @@ func newLaunchCmd(app *cli.App) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().BoolVarP(&o.tail, "tail", "t", false, "attach the game stdout to the process")
+
 	return cmd
 }
 
@@ -39,9 +42,13 @@ func (o *launchOpts) launch(args []string) error {
 	}
 
 	accountManager := o.app.AccountManager()
-	acc := accountManager.GetAccount(accountManager.GetDefault(), account.ModeUUID)
+	acc := accountManager.GetAccount(accountManager.GetDefault())
 	if acc == nil {
 		return fmt.Errorf("no default account is set")
+	}
+	accessToken, err := accountManager.GetAccountToken(acc.UUID)
+	if err != nil {
+		return err
 	}
 
 	javaManager := o.app.JavaManager()
@@ -50,5 +57,5 @@ func (o *launchOpts) launch(args []string) error {
 		return fmt.Errorf("no default java installation is set")
 	}
 
-	return launch.LaunchProfile(o.app.ConfigDir, p, acc, javaInstall)
+	return launch.LaunchProfile(o.app.ConfigDir, p, acc, accessToken, javaInstall, o.tail)
 }

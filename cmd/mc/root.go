@@ -34,9 +34,8 @@ func NewRootCmd(app *cli.App) *cobra.Command {
 		},
 	}
 
-	cmd.SetVersionTemplate(`{{printf "%s" .Version}}`)
-
 	cmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "", "json|yaml|template")
+	cmd.PersistentFlags().BoolVarP(&app.Config.NonInteractive, "non-interactive", "", false, "disable interactive prompts")
 
 	cmd.AddCommand(account.NewAccountCmd(app))
 	cmd.AddCommand(java.NewJavaCmd(app))
@@ -44,6 +43,7 @@ func NewRootCmd(app *cli.App) *cobra.Command {
 	cmd.AddCommand(newLaunchCmd(app))
 	cmd.AddCommand(newInstallCmd(app))
 	cmd.AddCommand(newVersionCmd(app))
+	cmd.AddCommand(newDebugCmd(app))
 
 	return cmd
 }

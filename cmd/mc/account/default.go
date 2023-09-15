@@ -7,7 +7,6 @@ import (
 	"github.com/mworzala/mc-cli/internal/pkg/cli"
 	appModel "github.com/mworzala/mc-cli/internal/pkg/cli/model"
 
-	"github.com/mworzala/mc-cli/internal/pkg/account"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +45,7 @@ func (o *defaultAccountOpts) getDefault() error {
 	}
 
 	// Read default account
-	acc := accountManager.GetAccount(accountManager.GetDefault(), account.ModeUUID)
+	acc := accountManager.GetAccount(accountManager.GetDefault())
 	if acc == nil {
 		// In this case the default has been misconfigured because we know there is at least one account, but yet the default does not exist.
 		// Correct the issue by resetting the default account to the first known account
@@ -58,7 +57,7 @@ func (o *defaultAccountOpts) getDefault() error {
 		}
 
 		// Now we know this is a safe call
-		acc = accountManager.GetAccount(accountManager.GetDefault(), account.ModeUUID)
+		acc = accountManager.GetAccount(accountManager.GetDefault())
 	}
 
 	return o.app.Present(&appModel.Account{
@@ -71,7 +70,7 @@ func (o *defaultAccountOpts) setDefault(args []string) error {
 	accountManager := o.app.AccountManager()
 
 	// Validate new account
-	acc := accountManager.GetAccount(args[0], account.ModeUUID|account.ModeName)
+	acc := accountManager.GetAccount(args[0])
 	if acc == nil {
 		return fmt.Errorf("no such account: %s", args[0])
 	}

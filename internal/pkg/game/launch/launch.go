@@ -17,7 +17,7 @@ import (
 	"github.com/mworzala/mc-cli/internal/pkg/util"
 )
 
-func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, javaInstall *java.Installation) error {
+func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, accessToken string, javaInstall *java.Installation, tail bool) error {
 	var spec gameModel.VersionSpec
 
 	versionSpecPath := path.Join(dataDir, "versions", p.Version, fmt.Sprintf("%s.json", p.Version))
@@ -81,7 +81,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, jav
 		"assets_index_name": spec.Assets,
 		"auth_player_name":  acc.Profile.Username,
 		"auth_uuid":         util.TrimUUID(acc.UUID),
-		"auth_access_token": acc.AccessToken,
+		"auth_access_token": accessToken,
 		// Clientid seems to be the mso client id, without dashes, base64 encoded. Should try it with my own client id to see if that works
 		"clientid":          "MTMwQUU2ODYwQUE1NDUwNkIyNUZCMzZBNjFCNjc3M0Q=",
 		"user_type":         "msa",
@@ -152,8 +152,6 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, jav
 
 	cmd := exec.Command(javaInstall.Path, args...)
 	cmd.Dir = p.Directory
-
-	tail := true
 
 	if tail {
 		cmd.Stdout = os.Stdout

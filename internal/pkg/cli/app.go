@@ -1,12 +1,16 @@
 package cli
 
 import (
+	"strings"
+
 	"github.com/mworzala/mc-cli/internal/pkg/account"
 	"github.com/mworzala/mc-cli/internal/pkg/cli/output"
+	"github.com/mworzala/mc-cli/internal/pkg/config"
 	"github.com/mworzala/mc-cli/internal/pkg/game"
 	"github.com/mworzala/mc-cli/internal/pkg/java"
 	"github.com/mworzala/mc-cli/internal/pkg/platform"
 	"github.com/mworzala/mc-cli/internal/pkg/profile"
+	"github.com/spf13/viper"
 )
 
 type BuildInfo struct {
@@ -20,12 +24,14 @@ type App struct {
 	Build BuildInfo
 
 	ConfigDir string
-	Output    output.Format
+	Output    output.Format //todo migrate
+	Config    *config.Config
 
 	accountManager account.Manager
 	javaManager    java.Manager
 	versionManager *game.VersionManager
 	profileManager profile.Manager
+	gameManager    game.Manager
 }
 
 func NewApp(build BuildInfo) *App {
@@ -36,14 +42,38 @@ func NewApp(build BuildInfo) *App {
 		a.Fatal(err)
 	}
 
+	a.readConfig()
+
 	a.Output = output.Format{Type: output.Default}
 	return a
+}
+
+func (a *App) readConfig() {
+	v := viper.New()
+	v.SetConfigType("toml")
+	v.SetConfigName("config")
+	v.AddConfigPath(a.ConfigDir)
+
+	// Allow config options to be overridden by env vars
+	v.SetEnvPrefix("MC")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	// Set default values
+	v.SetDefault("use_system_keyring", true)
+
+	if err := v.ReadInConfig(); err != nil {
+		a.Fatal(err)
+	}
+	a.Config = &config.Config{}
+	if err := v.Unmarshal(a.Config); err != nil {
+		a.Fatal(err)
+	}
 }
 
 func (a *App) AccountManager() account.Manager {
 	if a.accountManager == nil {
 		var err error
-		a.accountManager, err = account.NewManager(a.ConfigDir)
+		a.accountManager, err = account.NewManager(a.ConfigDir, a.Config)
 		if err != nil {
 			a.Fatal(err)
 		}
@@ -86,4 +116,16 @@ func (a *App) ProfileManager() profile.Manager {
 	}
 
 	return a.profileManager
+}
+
+func (a *App) GameManager() game.Manager {
+	if a.gameManager == nil {
+		var err error
+		a.gameManager, err = game.NewManager(a.ConfigDir)
+		if err != nil {
+			a.Fatal(err)
+		}
+	}
+
+	return a.gameManager
 }

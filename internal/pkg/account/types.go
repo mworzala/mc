@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 )
 
 type Type string
@@ -32,11 +31,6 @@ type Account struct {
 	Profile struct {
 		Username string `json:"username"`
 	} `json:"profile"`
-
-	// Minecraft auth token, the source of the token is Token
-	AccessToken string `json:"accessToken"`
-	// Expiry time for AccessToken
-	ExpiresAt time.Time `json:"expiresAt"`
 
 	Type Type `json:"type"`
 	// Source is the token data for the auth Type.
@@ -70,8 +64,5 @@ func (a *Account) UnmarshalJSON(data []byte) error {
 }
 
 type MicrosoftTokenData struct {
-	UserHash     string    `json:"userHash"`
-	AccessToken  string    `json:"accessToken"`
-	RefreshToken string    `json:"refreshToken"`
-	ExpiresAt    time.Time `json:"expiresAt"`
+	UserHash string `json:"userHash"`
 }

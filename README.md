@@ -20,7 +20,6 @@ otherwise it is a literal string
 - `mc java default|use <name>` - Set the default installation
 - `mc java list` - List all discovered java installations
 - `mc java discover <path-to-exe> [--set-default]` - Discover a preinstalled java version
-- ! `mc java add <path-to-exe> [name]` - Discover a new java installation with the given path, optionally with the given name. If the name is not specified, one will be generated.
 - !! `mc java install <version> [name]` - Install a new java dedicated to Minecraft
 
 ### Profile management

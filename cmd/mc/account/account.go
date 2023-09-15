@@ -14,6 +14,7 @@ func NewAccountCmd(app *cli.App) *cobra.Command {
 
 	cmd.AddCommand(newLoginCmd(app))
 	cmd.AddCommand(newDefaultCmd(app))
+	cmd.AddCommand(newTokenCmd(app))
 
 	return cmd
 }

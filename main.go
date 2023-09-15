@@ -17,7 +17,7 @@ var (
 )
 
 func main() {
-	// version is set using ldflags, so a complaint about constant condition here is wrong
+	//goland:noinspection GoBoolExpressions version is set using ldflags
 	if version == "dev" {
 		// Not built with goreleaser, so we should try to read go build info
 		if buildInfo, ok := debug.ReadBuildInfo(); ok {

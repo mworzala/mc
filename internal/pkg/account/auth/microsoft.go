@@ -16,6 +16,13 @@ const (
 	msoScope     = "XboxLive.signin offline_access"
 )
 
+type MsoTokenData struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+}
+
 // Microsoft OAuth (device code access flow)
 // https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-device-code
 
@@ -25,13 +32,6 @@ type DeviceCodeData struct {
 	VerificationURL string `json:"verification_uri"`
 	ExpiresIn       int    `json:"expires_in"`
 	Interval        int    `json:"interval"`
-}
-
-type DeviceCodeToken struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int    `json:"expires_in"`
-	TokenType    string `json:"token_type"`
 }
 
 type deviceCodePollErrorResponse struct {
@@ -66,7 +66,7 @@ func BeginDeviceCodeAuth() (*DeviceCodeData, error) {
 	return &payload, nil
 }
 
-func PollDeviceCodeAuth(data *DeviceCodeData) (*DeviceCodeToken, error) {
+func PollDeviceCodeAuth(data *DeviceCodeData) (*MsoTokenData, error) {
 	endpoint := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", msoTenant)
 	body := fmt.Sprintf("grant_type=%s&client_id=%s&device_code=%s",
 		url.QueryEscape(msoGrantType), url.QueryEscape(msoClientId), url.QueryEscape(data.DeviceCode))
@@ -84,7 +84,7 @@ func PollDeviceCodeAuth(data *DeviceCodeData) (*DeviceCodeToken, error) {
 		// If OK, we're done
 		switch res.StatusCode {
 		case http.StatusOK:
-			var payload DeviceCodeToken
+			var payload MsoTokenData
 			if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
 				return nil, err
 			}
@@ -108,6 +108,31 @@ func PollDeviceCodeAuth(data *DeviceCodeData) (*DeviceCodeToken, error) {
 	}
 
 	return nil, fmt.Errorf("device code expired") //todo define as constant
+}
+
+// Microsoft OAuth (refresh token flow)
+// https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#refresh-the-access-token
+
+func RefreshMsoToken(refreshToken string) (*MsoTokenData, error) {
+	endpoint := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", msoTenant)
+	body := fmt.Sprintf("client_id=%s&scope=%s&refresh_token=%s&grant_type=refresh_token",
+		url.QueryEscape(msoClientId), url.QueryEscape(msoScope), url.QueryEscape(refreshToken))
+
+	res, err := http.Post(endpoint, "application/x-www-form-urlencoded", strings.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP error: %s", res.Status)
+	}
+
+	var payload MsoTokenData
+	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+		return nil, err
+	}
+	return &payload, nil
 }
 
 // Xbox Live (mso to xbl token exchange)

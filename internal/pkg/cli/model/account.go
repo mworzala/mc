@@ -19,3 +19,13 @@ type LoginPrompt struct {
 func (p *LoginPrompt) String() string {
 	return fmt.Sprintf("%s %s", p.Url, p.Code)
 }
+
+type AccessToken struct {
+	Username string
+	UUID     string
+	Token    string
+}
+
+func (t *AccessToken) String() string {
+	return t.Token
+}

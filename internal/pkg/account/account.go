@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mworzala/mc-cli/internal/pkg/config"
+
 	"github.com/mworzala/mc-cli/internal/pkg/account/auth"
 	"github.com/mworzala/mc-cli/internal/pkg/util"
 )
@@ -28,11 +30,6 @@ type (
 // then for devicecode require setting `--device-code`. In this case it should check for a user agent on the
 // client side. Dont want random people spamming :)
 
-const (
-	ModeUUID = 1 << iota
-	ModeName = 1 << iota
-)
-
 type Manager interface {
 	// GetDefault returns the default account, or the empty string if there is no account set
 	GetDefault() string
@@ -44,10 +41,13 @@ type Manager interface {
 
 	Accounts() []string
 	// GetAccount returns the account with the given value, or nil if it cannot be found.
-	// The mode indicates whether to search by ModeUUID, ModeName, or both.
-	// When matching on uuid, the form with or without dashes is OK
-	// When matching name, it is case insensitive
-	GetAccount(value string, mode int) *Account
+	// Either a (case-insensitive) name, or a UUID (with/without dashes) can be matched
+	GetAccount(value string) *Account
+	// GetAccountToken returns a _minecraft_ access token for the given account.
+	// The given value may be a (case-insensitive) name, or a UUID (with/without dashes).
+	//
+	// This function will always return an active token, using the refresh token if necessary.
+	GetAccountToken(value string) (string, error)
 
 	// Login mechanisms
 
@@ -60,12 +60,16 @@ type Manager interface {
 }
 
 type fileManager struct {
-	Path        string              `json:"-"`
+	Path     string   `json:"-"`
+	Keychain Keychain `json:"-"`
+
 	Default     string              `json:"default"`
 	AccountData map[string]*Account `json:"accounts"`
 }
 
-func NewManager(dataDir string) (Manager, error) {
+func NewManager(dataDir string, config *config.Config) (Manager, error) {
+
+	// Read the accounts file
 	accountsFile := path.Join(dataDir, accountsFileName)
 	if _, err := os.Stat(accountsFile); errors.Is(err, fs.ErrNotExist) {
 		return &fileManager{
@@ -73,20 +77,20 @@ func NewManager(dataDir string) (Manager, error) {
 			AccountData: make(map[string]*Account),
 		}, nil
 	}
-
 	f, err := os.Open(accountsFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer f.Close()
 
-	manager := fileManager{Path: accountsFile}
+	// Construct the manager
+	manager := fileManager{Path: accountsFile, AccountData: make(map[string]*Account)}
 	if err := json.NewDecoder(f).Decode(&manager); err != nil {
 		return nil, fmt.Errorf("failed to read %s: %w", accountsFileName, err)
 	}
-	if manager.AccountData == nil {
-		manager.AccountData = make(map[string]*Account)
-	}
+
+	manager.Keychain = NewKeychain(dataDir, config.UseSystemKeyring)
+
 	return &manager, nil
 }
 
@@ -110,24 +114,44 @@ func (m *fileManager) Accounts() (result []string) {
 	return
 }
 
-func (m *fileManager) GetAccount(value string, mode int) *Account {
-	if mode&ModeUUID != 0 && util.IsUUID(value) {
-		return m.AccountData[util.ExpandUUID(value)]
-	}
+func (m *fileManager) GetAccount(value string) *Account {
+	isUuid := util.IsUUID(value)
+	for uuid, account := range m.AccountData {
+		if isUuid && uuid == util.ExpandUUID(value) {
+			return account
+		}
 
-	// If it wasnt a UUID and we are not searching name, we're done
-	if mode&ModeName == 0 {
-		return nil
-	}
-
-	test := strings.ToLower(value)
-	for _, acc := range m.AccountData {
-		name := strings.ToLower(acc.Profile.Username)
-		if test == name {
-			return acc
+		if !isUuid && strings.ToLower(account.Profile.Username) == strings.ToLower(value) {
+			return account
 		}
 	}
+
 	return nil
+}
+
+func (m *fileManager) GetAccountToken(value string) (string, error) {
+	account := m.GetAccount(value)
+	if account == nil {
+		return "", ErrAccountNotFound
+	}
+
+	credentials, err := m.Keychain.Get(account.UUID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get credentials: %w", err)
+	}
+
+	// Update the credentials if necessary
+	changed, err := m.updateCredentialsMso(credentials)
+	if err != nil {
+		return "", fmt.Errorf("failed to update credentials: %w", err)
+	}
+	if changed {
+		if err := m.Keychain.Set(account.UUID, credentials); err != nil {
+			return "", fmt.Errorf("failed to save credentials: %w", err)
+		}
+	}
+
+	return credentials.AccessToken, nil
 }
 
 func (m *fileManager) LoginMicrosoft(promptCallback MSOPromptCallback) (*Account, error) {
@@ -147,33 +171,15 @@ func (m *fileManager) LoginMicrosoft(promptCallback MSOPromptCallback) (*Account
 	if err != nil {
 		return nil, fmt.Errorf("failed while polling device code auth: %w", err)
 	}
-	msoTokenData.AccessToken = msoToken.AccessToken
-	msoTokenData.RefreshToken = msoToken.RefreshToken
-	msoTokenData.ExpiresAt = time.Now().Add(time.Duration(msoToken.ExpiresIn) * time.Second)
 
-	// Xbox Live
-	xblToken, err := auth.XboxLiveAuth(msoToken.AccessToken)
+	userHash, accessToken, tokenExpiration, err := m.createCredentialsMso(msoToken.AccessToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate with Xbox Live: %w", err)
+		return nil, err
 	}
-	msoTokenData.UserHash = xblToken.UserHash
-
-	// XSTS
-	xstsToken, err := auth.XSTSAuth(xblToken.AccessToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate with XSTS: %w", err)
-	}
-
-	// Minecraft Auth
-	mcToken, err := auth.MinecraftAuthMSO(xstsToken.AccessToken, xblToken.UserHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate with Minecraft: %w", err)
-	}
-	account.AccessToken = mcToken.AccessToken
-	account.ExpiresAt = time.Now().Add(time.Duration(mcToken.ExpiresIn) * time.Second)
+	msoTokenData.UserHash = userHash
 
 	// Fetch minecraft profile
-	profile, err := auth.GetMinecraftProfile(account.AccessToken)
+	profile, err := auth.GetMinecraftProfile(accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch minecraft profile: %w", err)
 	}
@@ -181,7 +187,16 @@ func (m *fileManager) LoginMicrosoft(promptCallback MSOPromptCallback) (*Account
 	account.Profile.Username = profile.Username
 
 	// Make sure to save the newly added account
+	err = m.Keychain.Set(account.UUID, &Credentials{
+		AccessToken:     accessToken,
+		TokenExpiration: tokenExpiration,
+		RefreshToken:    msoToken.RefreshToken,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to save account to keychain: %w", err)
+	}
 	m.AccountData[account.UUID] = &account
+
 	return &account, nil
 }
 
@@ -197,4 +212,64 @@ func (m *fileManager) Save() error {
 	}
 
 	return nil
+}
+
+// updateCredentialsMso attempts to update a set of MSO credentials using the refresh token if the included
+// minecraft access token is missing or expired.
+func (m *fileManager) updateCredentialsMso(credentials *Credentials) (bool, error) {
+	// If the access token is present and not expired, do nothing
+	if credentials.AccessToken != "" && credentials.TokenExpiration.After(time.Now()) {
+		return false, nil
+	}
+	//todo would be nice to log a message here about refreshing the token in a debug log
+
+	// Sanity check
+	if credentials.RefreshToken == "" {
+		return false, errors.New("missing refresh token")
+	}
+
+	// Refresh the credentials
+	msoToken, err := auth.RefreshMsoToken(credentials.RefreshToken)
+	if err != nil {
+		return false, fmt.Errorf("failed to refresh MSO token: %w", err)
+	}
+
+	credentials.RefreshToken = msoToken.RefreshToken
+
+	// Get a new Minecraft access token
+	_, credentials.AccessToken, credentials.TokenExpiration, err = m.createCredentialsMso(msoToken.AccessToken)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// createMsoCredentials creates a new minecraft access token from an MSO access token.
+func (m *fileManager) createCredentialsMso(msoAccessToken string) (xblUserHash string, accessToken string, tokenExpiration time.Time, err error) {
+	// Xbox Live
+	xblToken, err := auth.XboxLiveAuth(msoAccessToken)
+	if err != nil {
+		err = fmt.Errorf("failed to authenticate with Xbox Live: %w", err)
+		return
+	}
+	xblUserHash = xblToken.UserHash
+
+	// XSTS
+	xstsToken, err := auth.XSTSAuth(xblToken.AccessToken)
+	if err != nil {
+		err = fmt.Errorf("failed to authenticate with XSTS: %w", err)
+		return
+	}
+
+	// Minecraft Auth
+	mcToken, err := auth.MinecraftAuthMSO(xstsToken.AccessToken, xblToken.UserHash)
+	if err != nil {
+		err = fmt.Errorf("failed to authenticate with Minecraft: %w", err)
+		return
+	}
+	accessToken = mcToken.AccessToken
+	tokenExpiration = time.Now().Add(time.Duration(mcToken.ExpiresIn) * time.Second)
+
+	return
 }
