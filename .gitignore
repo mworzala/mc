@@ -7,3 +7,5 @@ mc-cli/
 
 # release data
 dist/
+
+.DS_Store
