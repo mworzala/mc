@@ -3,12 +3,12 @@ package mc
 import (
 	"github.com/MakeNowJust/heredoc"
 
-	"github.com/mworzala/mc-cli/cmd/mc/profile"
+	"github.com/mworzala/mc/cmd/mc/profile"
 
-	"github.com/mworzala/mc-cli/cmd/mc/account"
-	"github.com/mworzala/mc-cli/cmd/mc/java"
-	"github.com/mworzala/mc-cli/internal/pkg/cli"
-	"github.com/mworzala/mc-cli/internal/pkg/cli/output"
+	"github.com/mworzala/mc/cmd/mc/account"
+	"github.com/mworzala/mc/cmd/mc/java"
+	"github.com/mworzala/mc/internal/pkg/cli"
+	"github.com/mworzala/mc/internal/pkg/cli/output"
 	"github.com/spf13/cobra"
 )
 

@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mworzala/mc-cli/internal/pkg/cli"
-	"github.com/mworzala/mc-cli/internal/pkg/game"
-	"github.com/mworzala/mc-cli/internal/pkg/game/install"
-	gameModel "github.com/mworzala/mc-cli/internal/pkg/game/model"
-	"github.com/mworzala/mc-cli/internal/pkg/profile"
+	"github.com/mworzala/mc/internal/pkg/cli"
+	"github.com/mworzala/mc/internal/pkg/game"
+	"github.com/mworzala/mc/internal/pkg/game/install"
+	gameModel "github.com/mworzala/mc/internal/pkg/game/model"
+	"github.com/mworzala/mc/internal/pkg/profile"
 	"github.com/spf13/cobra"
 )
 

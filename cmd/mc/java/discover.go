@@ -3,8 +3,8 @@ package java
 import (
 	"fmt"
 
-	"github.com/mworzala/mc-cli/internal/pkg/cli"
-	"github.com/mworzala/mc-cli/internal/pkg/cli/model"
+	"github.com/mworzala/mc/internal/pkg/cli"
+	"github.com/mworzala/mc/internal/pkg/cli/model"
 	"github.com/spf13/cobra"
 )
 

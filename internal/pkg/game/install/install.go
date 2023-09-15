@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	gameModel "github.com/mworzala/mc-cli/internal/pkg/game/model"
-	"github.com/mworzala/mc-cli/internal/pkg/game/rule"
-	"github.com/mworzala/mc-cli/internal/pkg/util"
+	gameModel "github.com/mworzala/mc/internal/pkg/game/model"
+	"github.com/mworzala/mc/internal/pkg/game/rule"
+	"github.com/mworzala/mc/internal/pkg/util"
 )
 
 var (

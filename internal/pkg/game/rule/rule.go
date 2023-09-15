@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"runtime"
 
-	"github.com/mworzala/mc-cli/internal/pkg/platform"
+	"github.com/mworzala/mc/internal/pkg/platform"
 )
 
 //todo test this package a bunch, i don't feel super confident

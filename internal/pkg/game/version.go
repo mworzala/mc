@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	gameModel "github.com/mworzala/mc-cli/internal/pkg/game/model"
+	gameModel "github.com/mworzala/mc/internal/pkg/game/model"
 )
 
 const (

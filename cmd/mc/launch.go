@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mworzala/mc-cli/internal/pkg/java"
+	"github.com/mworzala/mc/internal/pkg/java"
 
-	"github.com/mworzala/mc-cli/internal/pkg/cli"
+	"github.com/mworzala/mc/internal/pkg/cli"
 
-	"github.com/mworzala/mc-cli/internal/pkg/game/launch"
+	"github.com/mworzala/mc/internal/pkg/game/launch"
 	"github.com/spf13/cobra"
 )
 

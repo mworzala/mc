@@ -1,8 +1,8 @@
 package model
 
 import (
-	"github.com/mworzala/mc-cli/internal/pkg/game/rule"
-	"github.com/mworzala/mc-cli/internal/pkg/util"
+	"github.com/mworzala/mc/internal/pkg/game/rule"
+	"github.com/mworzala/mc/internal/pkg/util"
 )
 
 const (

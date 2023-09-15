@@ -3,8 +3,8 @@ package account
 import (
 	"fmt"
 
-	"github.com/mworzala/mc-cli/internal/pkg/cli"
-	appModel "github.com/mworzala/mc-cli/internal/pkg/cli/model"
+	"github.com/mworzala/mc/internal/pkg/cli"
+	appModel "github.com/mworzala/mc/internal/pkg/cli/model"
 	"github.com/spf13/cobra"
 )
 

@@ -3,13 +3,13 @@ package cli
 import (
 	"strings"
 
-	"github.com/mworzala/mc-cli/internal/pkg/account"
-	"github.com/mworzala/mc-cli/internal/pkg/cli/output"
-	"github.com/mworzala/mc-cli/internal/pkg/config"
-	"github.com/mworzala/mc-cli/internal/pkg/game"
-	"github.com/mworzala/mc-cli/internal/pkg/java"
-	"github.com/mworzala/mc-cli/internal/pkg/platform"
-	"github.com/mworzala/mc-cli/internal/pkg/profile"
+	"github.com/mworzala/mc/internal/pkg/account"
+	"github.com/mworzala/mc/internal/pkg/cli/output"
+	"github.com/mworzala/mc/internal/pkg/config"
+	"github.com/mworzala/mc/internal/pkg/game"
+	"github.com/mworzala/mc/internal/pkg/java"
+	"github.com/mworzala/mc/internal/pkg/platform"
+	"github.com/mworzala/mc/internal/pkg/profile"
 	"github.com/spf13/viper"
 )
 

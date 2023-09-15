@@ -1,7 +1,7 @@
 package account
 
 import (
-	"github.com/mworzala/mc-cli/internal/pkg/cli"
+	"github.com/mworzala/mc/internal/pkg/cli"
 	"github.com/spf13/cobra"
 )
 

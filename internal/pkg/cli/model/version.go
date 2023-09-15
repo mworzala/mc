@@ -32,6 +32,6 @@ func (v *Version) String() string {
 
 	return heredoc.Docf(`
 		mc-cli version %s%s
-		https://github.com/mworzala/mc-cli/releases/tag/v%s
+		https://github.com/mworzala/mc/releases/tag/v%s
 `, v.Tag, date, v.Tag)
 }

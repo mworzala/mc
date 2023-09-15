@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mworzala/mc-cli/internal/pkg/config"
+	"github.com/mworzala/mc/internal/pkg/config"
 
-	"github.com/mworzala/mc-cli/internal/pkg/account/auth"
-	"github.com/mworzala/mc-cli/internal/pkg/util"
+	"github.com/mworzala/mc/internal/pkg/account/auth"
+	"github.com/mworzala/mc/internal/pkg/util"
 )
 
 var (

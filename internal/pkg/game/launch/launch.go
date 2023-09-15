@@ -8,13 +8,13 @@ import (
 	"path"
 	"strings"
 
-	"github.com/mworzala/mc-cli/internal/pkg/game/rule"
+	"github.com/mworzala/mc/internal/pkg/game/rule"
 
-	"github.com/mworzala/mc-cli/internal/pkg/account"
-	gameModel "github.com/mworzala/mc-cli/internal/pkg/game/model"
-	"github.com/mworzala/mc-cli/internal/pkg/java"
-	"github.com/mworzala/mc-cli/internal/pkg/profile"
-	"github.com/mworzala/mc-cli/internal/pkg/util"
+	"github.com/mworzala/mc/internal/pkg/account"
+	gameModel "github.com/mworzala/mc/internal/pkg/game/model"
+	"github.com/mworzala/mc/internal/pkg/java"
+	"github.com/mworzala/mc/internal/pkg/profile"
+	"github.com/mworzala/mc/internal/pkg/util"
 )
 
 func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, accessToken string, javaInstall *java.Installation, tail bool) error {

@@ -1,4 +1,4 @@
-module github.com/mworzala/mc-cli
+module github.com/mworzala/mc
 
 go 1.19
 
