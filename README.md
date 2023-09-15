@@ -40,6 +40,7 @@ make build
 todo
 
 ## Automation
+todo discuss output options, non interactive mode, etc
 
 ## Contributing
 todo
