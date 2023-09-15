@@ -12,7 +12,8 @@ otherwise it is a literal string
 - `mc account default|use` - Show the current default account
 - `mc account default|use <username|uuid>` - Set the default account
 - `mc account login` - Login to a new account with Microsoft
-- ! `mc account list` - Show a list of all known accounts
+- `mc account token (username|uuid)` - Get an access token for the given account
+- `mc account list` - Show a list of all known accounts
 
 ### Java management
 
@@ -27,9 +28,10 @@ otherwise it is a literal string
 - `mc install <mc-version> [name]` - Install vanilla minecraft (profile will be named as version if unspecified)
 - `mc install <mc-version> [name] --fabric [--loader loader-version]` - Install fabric
 - `mc run <profile>` - Launch a profile immediately
-
-- ! `mc profile list`
+- `mc profile list`
+-
 - ! `mc profile delete <name>`
+- ! `mc profile config <name> [key] [value]`
 
 ### Mod management (todo)
 All commands would have a `--profile`, `-p` arg to specify which profile is being edited.
@@ -54,4 +56,4 @@ autolink.resourcepacks = bool
 
 ## Building from source
 
-`go build -o mc cmd/mc/*.go`
+`make build`

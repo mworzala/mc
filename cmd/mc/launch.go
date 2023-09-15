@@ -2,6 +2,9 @@ package mc
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/mworzala/mc-cli/internal/pkg/java"
 
 	"github.com/mworzala/mc-cli/internal/pkg/cli"
 
@@ -52,9 +55,19 @@ func (o *launchOpts) launch(args []string) error {
 	}
 
 	javaManager := o.app.JavaManager()
-	javaInstall := javaManager.GetInstallation(javaManager.GetDefault())
+	var javaInstall *java.Installation
+	if p.Config().Java != "" {
+		javaInstall = javaManager.GetInstallation(p.Config().Java)
+		if javaInstall == nil {
+			_, _ = fmt.Fprintf(os.Stderr, "warning: configured java installation '%s' not found, using default\n", p.Config().Java)
+		}
+	}
+	// If still unset (or was invalid), use the default
 	if javaInstall == nil {
-		return fmt.Errorf("no default java installation is set")
+		javaInstall = javaManager.GetInstallation(javaManager.GetDefault())
+		if javaInstall == nil {
+			return fmt.Errorf("no default java installation is set")
+		}
 	}
 
 	return launch.LaunchProfile(o.app.ConfigDir, p, acc, accessToken, javaInstall, o.tail)
