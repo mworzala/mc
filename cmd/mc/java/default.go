@@ -19,7 +19,7 @@ func newDefaultCmd(app *cli.App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "default",
 		Aliases: []string{"use"},
-		Short:   "Get or set the default java installation",
+		Short:   "Manage the default java installation",
 		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.app = app

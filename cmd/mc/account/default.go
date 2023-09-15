@@ -20,8 +20,7 @@ func newDefaultCmd(app *cli.App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "default",
 		Aliases: []string{"use"},
-		Short:   "Get or set the default account",
-		Long:    "abcd",
+		Short:   "Manage the default account",
 		Args:    cobra.MaximumNArgs(1),
 		//todo override completions
 		RunE: func(_ *cobra.Command, args []string) error {

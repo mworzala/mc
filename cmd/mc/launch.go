@@ -23,6 +23,7 @@ func newLaunchCmd(app *cli.App) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "launch",
+		Short:   "Launch a profile (Minecraft installation)",
 		Aliases: []string{"run"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {

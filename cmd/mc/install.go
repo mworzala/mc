@@ -28,7 +28,7 @@ func newInstallCmd(app *cli.App) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "install",
-		Short: "Install a new Minecraft version and/or mod loader)",
+		Short: "Install a new Minecraft version",
 		Args: func(cmd *cobra.Command, args []string) error {
 			o.app = app
 			return o.validateArgs(cmd, args)

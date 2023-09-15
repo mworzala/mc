@@ -17,8 +17,7 @@ func newTokenCmd(app *cli.App) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "todo",
-		Long:  "abcd",
+		Short: "Get a Minecraft access token",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(_ *cobra.Command, args []string) (err error) {
 			o.app = app

@@ -18,8 +18,9 @@ func newDiscoverCommand(app *cli.App) *cobra.Command {
 	var o discoverJavaOpts
 
 	cmd := &cobra.Command{
-		Use:  "discover",
-		Args: cobra.ExactArgs(1),
+		Use:   "discover",
+		Short: "Discover a new Java installation",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
 			o.app = app
 			return o.discover(args)

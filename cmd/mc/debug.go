@@ -15,8 +15,9 @@ func newDebugCmd(app *cli.App) *cobra.Command {
 	var o debugOpts
 
 	cmd := &cobra.Command{
-		Use:  "debug",
-		Args: cobra.NoArgs,
+		Use:    "debug",
+		Hidden: true,
+		Args:   cobra.NoArgs,
 		RunE: func(_ *cobra.Command, args []string) error {
 			o.app = app
 			return o.debug(args)
@@ -33,13 +34,6 @@ func (o *debugOpts) debug(args []string) error {
 		return err
 	}
 	println(string(res))
-
-	accounts := o.app.AccountManager()
-	acc, err := accounts.GetAccountToken("aceb326f-da15-45bc-bf2f-11940c21780c")
-	if err != nil {
-		return err
-	}
-	println(acc)
 
 	return nil
 }

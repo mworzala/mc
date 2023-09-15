@@ -12,9 +12,9 @@ import (
 func newVersionCmd(app *cli.App) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "version",
-		Short: "Print the version information of mc-cli",
-		Args:  cobra.NoArgs,
+		Use:    "version",
+		Hidden: true,
+		Args:   cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			state := "clean"
 			if app.Build.Modified {

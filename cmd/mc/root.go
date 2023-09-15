@@ -1,7 +1,7 @@
 package mc
 
 import (
-	"fmt"
+	"github.com/MakeNowJust/heredoc"
 
 	"github.com/mworzala/mc-cli/cmd/mc/profile"
 
@@ -12,22 +12,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var longDescription = `Blah blah blah need to write a longer description
-it can have newlines as well :O`
-
 func NewRootCmd(app *cli.App) *cobra.Command {
 	var outputFormat string
 
-	versionStr := "dev"
-	if app.Build.Commit != "none" {
-		versionStr = fmt.Sprintf("%s+%s", app.Build.Version, app.Build.Commit[0:6])
-	}
-
 	cmd := &cobra.Command{
-		Use:     "mc",
-		Version: versionStr,
-		Short:   "mc is a Minecraft installer and launcher",
-		Long:    longDescription,
+		Use:   "mc",
+		Short: "Minecraft CLI",
+		Long:  "Install and manage multiple Minecraft installations from the command line.",
+		Example: heredoc.Doc(`
+			$ mc account login
+			$ mc install 1.20.1 --fabric
+			$ mc run 1.20.1-fabric`),
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) (err error) {
 			app.Output, err = output.ParseFormat(outputFormat)
 			return

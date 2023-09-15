@@ -22,8 +22,7 @@ func newLoginCmd(app *cli.App) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:        "login",
-		Short:      "todo",
-		Long:       "abcd",
+		Short:      "Sign into a new Minecraft account",
 		ValidArgs:  []string{"microsoft", "mojang"},
 		ArgAliases: []string{"mso", "minecraft", "mc"},
 		Args:       cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),

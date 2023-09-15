@@ -9,7 +9,7 @@ func NewAccountCmd(app *cli.App) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "account",
-		Short: "Manage accounts or log into a new one",
+		Short: "Manage Minecraft accounts",
 	}
 
 	cmd.AddCommand(newLoginCmd(app))

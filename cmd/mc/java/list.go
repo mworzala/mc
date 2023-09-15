@@ -15,7 +15,7 @@ func newListCmd(app *cli.App) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List discovered java installations",
+		Short: "List Java installations",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			o.app = app
