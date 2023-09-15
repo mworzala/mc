@@ -38,7 +38,7 @@ func NewApp(build BuildInfo) *App {
 	a := &App{Build: build}
 
 	var err error
-	if a.ConfigDir, err = platform.GetConfigDir(build.Version == "dev"); err != nil {
+	if a.ConfigDir, err = platform.GetConfigDir(false); err != nil {
 		a.Fatal(err)
 	}
 
