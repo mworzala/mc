@@ -18,7 +18,7 @@ Planned:
 
 ## Installation
 
-> ![WARNING]
+> [!WARNING]
 > Windows is not officially supported yet, but it may work. If you encounter any issues, please report them as an issue.
 
 A prebuilt binary is available for macOS and Linux in the [releases](https://github.com/mworzala/mc/releases) tab.
