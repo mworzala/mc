@@ -69,12 +69,15 @@ type fileManager struct {
 
 func NewManager(dataDir string, config *config.Config) (Manager, error) {
 
+	keychain := NewKeychain(dataDir, config.UseSystemKeyring)
+
 	// Read the accounts file
 	accountsFile := path.Join(dataDir, accountsFileName)
 	if _, err := os.Stat(accountsFile); errors.Is(err, fs.ErrNotExist) {
 		return &fileManager{
 			Path:        accountsFile,
 			AccountData: make(map[string]*Account),
+			Keychain:    keychain,
 		}, nil
 	}
 	f, err := os.Open(accountsFile)
@@ -84,12 +87,14 @@ func NewManager(dataDir string, config *config.Config) (Manager, error) {
 	defer f.Close()
 
 	// Construct the manager
-	manager := fileManager{Path: accountsFile, AccountData: make(map[string]*Account)}
+	manager := fileManager{
+		Path:        accountsFile,
+		AccountData: make(map[string]*Account),
+		Keychain:    keychain,
+	}
 	if err := json.NewDecoder(f).Decode(&manager); err != nil {
 		return nil, fmt.Errorf("failed to read %s: %w", accountsFileName, err)
 	}
-
-	manager.Keychain = NewKeychain(dataDir, config.UseSystemKeyring)
 
 	return &manager, nil
 }
