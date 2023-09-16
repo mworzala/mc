@@ -15,6 +15,11 @@ import (
 type launchOpts struct {
 	app *cli.App
 
+	// Quick play actions
+	quickPlaySingleplayer string
+	quickPlayMultiplayer  string
+	quickPlayRealms       string
+
 	tail bool
 }
 
@@ -31,6 +36,11 @@ func newLaunchCmd(app *cli.App) *cobra.Command {
 			return o.launch(args)
 		},
 	}
+
+	cmd.Flags().StringVarP(&o.quickPlaySingleplayer, "world", "", "", "launch into the server (1.20+)")
+	cmd.Flags().StringVarP(&o.quickPlayMultiplayer, "server", "", "", "launch into a world (1.20+)")
+	cmd.Flags().StringVarP(&o.quickPlayRealms, "realm", "", "", "launch into a realm (1.20+)")
+	cmd.MarkFlagsMutuallyExclusive("world", "server", "realm")
 
 	cmd.Flags().BoolVarP(&o.tail, "tail", "t", false, "attach the game stdout to the process")
 
@@ -71,5 +81,23 @@ func (o *launchOpts) launch(args []string) error {
 		}
 	}
 
-	return launch.LaunchProfile(o.app.ConfigDir, p, acc, accessToken, javaInstall, o.tail)
+	var quickPlay *launch.QuickPlay
+	if o.quickPlaySingleplayer != "" {
+		quickPlay = &launch.QuickPlay{
+			Type: launch.QuickPlaySingleplayer,
+			Id:   o.quickPlaySingleplayer,
+		}
+	} else if o.quickPlayMultiplayer != "" {
+		quickPlay = &launch.QuickPlay{
+			Type: launch.QuickPlayMultiplayer,
+			Id:   o.quickPlayMultiplayer,
+		}
+	} else if o.quickPlayRealms != "" {
+		quickPlay = &launch.QuickPlay{
+			Type: launch.QuickPlayRealms,
+			Id:   o.quickPlayRealms,
+		}
+	}
+
+	return launch.LaunchProfile(o.app.ConfigDir, p, acc, accessToken, javaInstall, o.tail, quickPlay)
 }
