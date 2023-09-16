@@ -55,7 +55,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 			libPath := path.Join(librariesPath, lib.Downloads.Artifact.Path)
 			classpath.WriteString(libPath)
 		} else if lib.Url != "" { // Direct maven library
-			parts := strings.Split(lib.Name, platform.ClasspathSeparator())
+			parts := strings.Split(lib.Name, ":")
 			groupId := parts[0]
 			artifactName := parts[1]
 			version := parts[2]
