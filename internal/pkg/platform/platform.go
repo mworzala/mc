@@ -60,3 +60,10 @@ func OpenUrl(url string) error {
 func WriteToClipboard(text string) error {
 	return clipboard.WriteAll(text)
 }
+
+func ClasspathSeparator() string {
+	if runtime.GOOS == "windows" {
+		return ";"
+	}
+	return ":"
+}

@@ -6,7 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"reflect"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/mworzala/mc/internal/pkg/platform"
 
 	"github.com/mworzala/mc/internal/pkg/game/rule"
 
@@ -51,7 +55,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 			libPath := path.Join(librariesPath, lib.Downloads.Artifact.Path)
 			classpath.WriteString(libPath)
 		} else if lib.Url != "" { // Direct maven library
-			parts := strings.Split(lib.Name, ":")
+			parts := strings.Split(lib.Name, platform.ClasspathSeparator())
 			groupId := parts[0]
 			artifactName := parts[1]
 			version := parts[2]
@@ -59,7 +63,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 			artifactPath := fmt.Sprintf("%s/%s/%s/%s-%s.jar", strings.ReplaceAll(groupId, ".", "/"), artifactName, version, artifactName, version)
 			classpath.WriteString(path.Join(librariesPath, artifactPath))
 		}
-		classpath.WriteString(":")
+		classpath.WriteString(platform.ClasspathSeparator())
 	}
 
 	if spec.InheritsFrom != "" {
@@ -102,25 +106,51 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 	}
 
 	var args []string
-	args = append(args, "-XstartOnFirstThread")
 
 	for _, arg := range spec.Arguments.JVM {
 		if s, ok := arg.(string); ok {
 			args = append(args, replaceVars(s))
 		} else if m, ok := arg.(map[string]interface{}); ok {
-			_ = m
-			//value := m["value"]
-			//if s, ok := value.(string); ok {
-			//	args = append(args, replaceVars(s))
-			//} else if a, ok := value.([]interface{}); ok {
-			//	for _, v := range a {
-			//		if s, ok := v.(string); ok {
-			//			args = append(args, replaceVars(s))
-			//		}
-			//	}
-			//} else {
-			//	panic(fmt.Sprintf("unknown type: %T", value))
-			//}
+			var ruleDef []*rule.Rule
+
+			md, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+				DecodeHook: func(from, to reflect.Type, value interface{}) (interface{}, error) {
+					if from.Kind() == reflect.String && to == reflect.TypeOf(rule.Allow) {
+						if value.(string) == "allow" {
+							return rule.Allow, nil
+						}
+						return rule.Deny, nil
+					}
+					return value, nil
+				},
+				Result: &ruleDef,
+			})
+			if err != nil {
+				panic("todo")
+			}
+			if err := md.Decode(m["rules"]); err != nil {
+				panic(fmt.Errorf("invalid rule: %w", err)) //todo better error handling. Should print about this and add an option to ignore unknown rules
+			}
+
+			if rules.Eval(ruleDef) == rule.Deny {
+				continue
+			}
+
+			// Add the rules
+			switch value := m["value"].(type) {
+			case string:
+				args = append(args, replaceVars(value))
+			case []interface{}:
+				for _, v := range value {
+					if s, ok := v.(string); ok {
+						args = append(args, replaceVars(s))
+					} else {
+						panic(fmt.Sprintf("unknown inner value type: %T", v))
+					}
+				}
+			default:
+				panic(fmt.Sprintf("unknown value type: %T", value))
+			}
 		} else {
 			panic("unknown arg type")
 		}
@@ -132,19 +162,47 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 		if s, ok := arg.(string); ok {
 			args = append(args, replaceVars(s))
 		} else if m, ok := arg.(map[string]interface{}); ok {
-			_ = m
-			//value := m["value"]
-			//if s, ok := value.(string); ok {
-			//	args = append(args, replaceVars(s))
-			//} else if a, ok := value.([]interface{}); ok {
-			//	for _, v := range a {
-			//		if s, ok := v.(string); ok {
-			//			args = append(args, replaceVars(s))
-			//		}
-			//	}
-			//} else {
-			//	panic(fmt.Sprintf("unknown type: %T", value))
-			//}
+			//todo duplicated above
+			var ruleDef []*rule.Rule
+
+			md, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+				DecodeHook: func(from, to reflect.Type, value interface{}) (interface{}, error) {
+					if from.Kind() == reflect.String && to == reflect.TypeOf(rule.Allow) {
+						if value.(string) == "allow" {
+							return rule.Allow, nil
+						}
+						return rule.Deny, nil
+					}
+					return value, nil
+				},
+				Result: &ruleDef,
+			})
+			if err != nil {
+				panic("todo")
+			}
+			if err := md.Decode(m["rules"]); err != nil {
+				panic(fmt.Errorf("invalid rule: %w", err)) //todo better error handling. Should print about this and add an option to ignore unknown rules
+			}
+
+			if rules.Eval(ruleDef) == rule.Deny {
+				continue
+			}
+
+			// Add the rules
+			switch value := m["value"].(type) {
+			case string:
+				args = append(args, replaceVars(value))
+			case []interface{}:
+				for _, v := range value {
+					if s, ok := v.(string); ok {
+						args = append(args, replaceVars(s))
+					} else {
+						panic(fmt.Sprintf("unknown inner value type: %T", v))
+					}
+				}
+			default:
+				panic(fmt.Sprintf("unknown value type: %T", value))
+			}
 		} else {
 			panic("unknown arg type")
 		}
