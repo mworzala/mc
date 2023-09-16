@@ -62,7 +62,7 @@ func NewEvaluator(features ...string) *Evaluator {
 	}
 
 	return &Evaluator{
-		os:       determineOS(),
+		os:       platform.Name,
 		arch:     determineArch(),
 		version:  determineVersion(),
 		features: featureMap,
@@ -112,19 +112,6 @@ func (e *Evaluator) evalSingle(rule *Rule) Action {
 	}
 
 	return action
-}
-
-func determineOS() string {
-	switch runtime.GOOS {
-	case "darwin":
-		return "osx"
-	case "linux":
-		return "linux"
-	case "windows":
-		return "windows"
-	default:
-		panic(fmt.Sprintf("unsupported os/arch: %s/%s", runtime.GOOS, runtime.GOARCH))
-	}
 }
 
 func determineArch() string {

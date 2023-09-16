@@ -3,7 +3,10 @@
 
 package platform
 
-const ClasspathSeparator = ":"
+const (
+	Name               = "linux"
+	ClasspathSeparator = ":"
+)
 
 func GetVersion() (string, error) {
 	return "unknown", nil

@@ -5,7 +5,10 @@ package platform
 
 import "golang.org/x/sys/windows/registry"
 
-const ClasspathSeparator = ";"
+const (
+	Name               = "windows"
+	ClasspathSeparator = ";"
+)
 
 func GetVersion() (string, error) {
 	const NTCurrentVersionKey = `SOFTWARE\Microsoft\Windows NT\CurrentVersion`
