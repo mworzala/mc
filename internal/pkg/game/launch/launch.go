@@ -292,7 +292,7 @@ func mergeSpec(spec, base *gameModel.VersionSpec) *gameModel.VersionSpec {
 	if spec.Assets != "" {
 		result.Assets = spec.Assets
 	} else {
-		result.Assets = base.MainClass
+		result.Assets = base.Assets
 	}
 
 	result.Arguments.JVM = append(spec.Arguments.JVM, base.Arguments.JVM...)
