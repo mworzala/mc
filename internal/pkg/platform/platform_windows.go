@@ -5,11 +5,10 @@ package platform
 
 import "golang.org/x/sys/windows/registry"
 
-const (
-	NTCurrentVersionKey = `SOFTWARE\Microsoft\Windows NT\CurrentVersion`
-)
+const ClasspathSeparator = ";"
 
 func GetVersion() (string, error) {
+	const NTCurrentVersionKey = `SOFTWARE\Microsoft\Windows NT\CurrentVersion`
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, NTCurrentVersionKey, registry.QUERY_VALUE)
 	if err != nil {
 		return "", err

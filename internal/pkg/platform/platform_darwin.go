@@ -3,6 +3,8 @@
 
 package platform
 
+const ClasspathSeparator = ":"
+
 func GetVersion() (string, error) {
 	return "unknown", nil
 }

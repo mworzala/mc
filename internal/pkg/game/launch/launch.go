@@ -63,7 +63,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 			artifactPath := fmt.Sprintf("%s/%s/%s/%s-%s.jar", strings.ReplaceAll(groupId, ".", "/"), artifactName, version, artifactName, version)
 			classpath.WriteString(path.Join(librariesPath, artifactPath))
 		}
-		classpath.WriteString(platform.ClasspathSeparator())
+		classpath.WriteString(platform.ClasspathSeparator)
 	}
 
 	if spec.InheritsFrom != "" {
