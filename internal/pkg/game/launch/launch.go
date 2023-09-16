@@ -213,6 +213,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 
 	if tail {
 		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stdout
 	} else {
 		cmd.Stdout = io.Discard
 	}
