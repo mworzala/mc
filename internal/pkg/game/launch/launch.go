@@ -21,7 +21,16 @@ import (
 	"github.com/mworzala/mc/internal/pkg/util"
 )
 
-func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, accessToken string, javaInstall *java.Installation, tail bool) error {
+// todo need to rewrite this whole thing... it's a mess
+func LaunchProfile(
+	dataDir string,
+	p *profile.Profile,
+	acc *account.Account,
+	accessToken string,
+	javaInstall *java.Installation,
+	tail bool,
+	quickPlay *QuickPlay,
+) error {
 	var spec gameModel.VersionSpec
 
 	versionSpecPath := path.Join(dataDir, "versions", p.Version, fmt.Sprintf("%s.json", p.Version))
@@ -40,7 +49,43 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 		spec = *mergeSpec(&spec, &inheritedSpec)
 	}
 
-	rules := rule.NewEvaluator()
+	vars := map[string]string{
+		// jvm
+		"natives_directory": ".",
+		"launcher_name":     "mc",
+		"launcher_version":  "0.0.1",
+		// game
+		"version_name":      p.Version,
+		"game_directory":    p.Directory,
+		"assets_root":       path.Join(dataDir, "assets"),
+		"assets_index_name": spec.Assets,
+		"auth_player_name":  acc.Profile.Username,
+		"auth_uuid":         util.TrimUUID(acc.UUID),
+		"auth_access_token": accessToken,
+		// Clientid seems to be the mso client id, without dashes, base64 encoded. Should try it with my own client id to see if that works
+		"clientid":          "MTMwQUU2ODYwQUE1NDUwNkIyNUZCMzZBNjFCNjc3M0Q=",
+		"user_type":         "msa",
+		"version_type":      "release", //todo this needs to be release/snapshot
+		"resolution_width":  "1920",
+		"resolution_height": "1080",
+	}
+
+	var features []string
+	if quickPlay != nil {
+		//todo need to check game version for this
+		switch quickPlay.Type {
+		case QuickPlaySingleplayer:
+			features = append(features, "is_quick_play_singleplayer")
+			vars["quickPlaySingleplayer"] = quickPlay.Id
+		case QuickPlayMultiplayer:
+			features = append(features, "is_quick_play_multiplayer")
+			vars["quickPlayMultiplayer"] = quickPlay.Id
+		case QuickPlayRealms:
+			features = append(features, "is_quick_play_realms")
+			vars["quickPlayRealms"] = quickPlay.Id
+		}
+	}
+	rules := rule.NewEvaluator(features...)
 
 	// Build classpath
 	classpath := strings.Builder{}
@@ -72,27 +117,7 @@ func LaunchProfile(dataDir string, p *profile.Profile, acc *account.Account, acc
 		classpath.WriteString(path.Join(dataDir, "versions", p.Version, fmt.Sprintf("%s.jar", p.Version)))
 	}
 
-	vars := map[string]string{
-		// jvm
-		"natives_directory": ".",
-		"launcher_name":     "mc",
-		"launcher_version":  "0.0.1",
-		"classpath":         classpath.String(),
-		// game
-		"version_name":      p.Version,
-		"game_directory":    p.Directory,
-		"assets_root":       path.Join(dataDir, "assets"),
-		"assets_index_name": spec.Assets,
-		"auth_player_name":  acc.Profile.Username,
-		"auth_uuid":         util.TrimUUID(acc.UUID),
-		"auth_access_token": accessToken,
-		// Clientid seems to be the mso client id, without dashes, base64 encoded. Should try it with my own client id to see if that works
-		"clientid":          "MTMwQUU2ODYwQUE1NDUwNkIyNUZCMzZBNjFCNjc3M0Q=",
-		"user_type":         "msa",
-		"version_type":      "release", //todo this needs to be release/snapshot
-		"resolution_width":  "1920",
-		"resolution_height": "1080",
-	}
+	vars["classpath"] = classpath.String()
 
 	if msoTokenData, ok := acc.Source.(*account.MicrosoftTokenData); ok {
 		vars["auth_xuid"] = msoTokenData.UserHash
