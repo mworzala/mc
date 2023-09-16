@@ -70,7 +70,8 @@ func downloadFile(file string, download FileDownload, listeners ...io.Writer) er
 	if download.Sha1 != "" {
 		writers = append(writers, hash)
 	}
-	if _, err := io.Copy(io.MultiWriter(writers...), res.Body); err != nil {
+	if _, err = io.Copy(io.MultiWriter(writers...), res.Body); err != nil {
+		_ = os.Remove(file) // Attempt to delete the file
 		return err
 	}
 
