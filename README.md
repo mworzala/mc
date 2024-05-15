@@ -39,6 +39,9 @@ make build
 ## Usage
 todo
 
+It is possibly to change the data directory by setting `MC_CLI_DATA_DIR` to the directory.
+Files will be placed directly in this directory.
+
 ## Automation
 todo discuss output options, non interactive mode, etc
 
