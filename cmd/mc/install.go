@@ -14,6 +14,8 @@ import (
 
 //todo tab completions
 
+var triedToUpdate = false
+
 type installOpts struct {
 	app *cli.App
 
@@ -53,8 +55,17 @@ func (o *installOpts) validateArgs(cmd *cobra.Command, args []string) (err error
 	// Validate version arg (0)
 	versionManager := o.app.VersionManager()
 	if o.version, err = versionManager.FindVanilla(args[0]); errors.Is(err, game.ErrUnknownVersion) {
-		return fmt.Errorf("%w: %s", err, args[0])
+		if triedToUpdate {
+			return fmt.Errorf("%w: %s", err, args[0])
+		}
+		fmt.Println("Couldn't find version: ", args[0], ", refreshing manfiest")
+		triedToUpdate = true
+		if err := versionManager.UpdateManifest(); err != nil {
+			return err
+		}
+		return o.validateArgs(cmd, args)
 	}
+	triedToUpdate = false
 
 	// Validate name arg (1, optional)
 	if len(args) > 1 && !profile.IsValidName(args[1]) {
@@ -70,7 +81,15 @@ func (o *installOpts) validateArgs(cmd *cobra.Command, args []string) (err error
 
 		o.version, err = versionManager.FindFabric(args[0], o.fabricLoader)
 		if errors.Is(err, game.ErrUnknownFabricVersion) {
-			return fmt.Errorf("%w: %s", err, args[0])
+			if triedToUpdate {
+				return fmt.Errorf("%w: %s", err, args[0])
+			}
+			fmt.Println("Couldn't find fabric for version: ", args[0], ", refreshing manfiest")
+			triedToUpdate = true
+			if err := versionManager.UpdateManifest(); err != nil {
+				return err
+			}
+			return o.validateArgs(cmd, args)
 		}
 		if errors.Is(err, game.ErrUnknownFabricLoader) {
 			return fmt.Errorf("%w: %s", err, o.fabricLoader)
