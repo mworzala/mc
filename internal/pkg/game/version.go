@@ -92,7 +92,7 @@ func NewVersionManager(dataDir string) (*VersionManager, error) {
 	m := &VersionManager{cacheFile: cacheFile}
 
 	if _, err := os.Stat(cacheFile); errors.Is(err, fs.ErrNotExist) {
-		if err := m.updateManifest(); err != nil {
+		if err := m.UpdateManifest(); err != nil {
 			return nil, err
 		}
 	} else {
@@ -148,7 +148,7 @@ func (m *VersionManager) FabricLoaderExists(name string) bool {
 	return ok
 }
 
-func (m *VersionManager) updateManifest() error {
+func (m *VersionManager) UpdateManifest() error {
 	var result VersionManifestV2
 	result.LastUpdated = time.Now()
 	result.Vanilla.Versions = make(map[string]*gameModel.VersionInfo)
