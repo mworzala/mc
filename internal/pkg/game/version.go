@@ -31,7 +31,6 @@ var (
 	ErrUnknownVersion       = errors.New("unknown version")
 	ErrUnknownFabricVersion = errors.New("unknown fabric version")
 	ErrUnknownFabricLoader  = errors.New("unknown fabric loader")
-	triedToUpdate           = false
 )
 
 type (
@@ -84,8 +83,9 @@ type (
 // Version manager
 
 type VersionManager struct {
-	cacheFile  string
-	manifestV2 *VersionManifestV2
+	cacheFile     string
+	manifestV2    *VersionManifestV2
+	triedToUpdate bool
 }
 
 func NewVersionManager(dataDir string) (*VersionManager, error) {
@@ -118,15 +118,15 @@ func NewVersionManager(dataDir string) (*VersionManager, error) {
 func (m *VersionManager) FindVanilla(name string) (*gameModel.VersionInfo, error) {
 	v, ok := m.manifestV2.Vanilla.Versions[strings.ToLower(name)]
 	if !ok {
-		if triedToUpdate {
+		if m.triedToUpdate {
 			return nil, ErrUnknownVersion
 		}
-		triedToUpdate = true
+		m.triedToUpdate = true
 		fmt.Println("Couldn't find version: ", name, ", refreshing manfiest")
 		m.updateManifest()
 		return m.FindVanilla(name)
 	}
-	triedToUpdate = false
+	m.triedToUpdate = false
 	return v, nil
 }
 
@@ -137,15 +137,15 @@ func (m *VersionManager) FindFabric(name, loader string) (*gameModel.VersionInfo
 
 	partial, ok := m.manifestV2.Fabric.Versions[strings.ToLower(name)]
 	if !ok {
-		if triedToUpdate {
+		if m.triedToUpdate {
 			return nil, ErrUnknownFabricVersion
 		}
-		triedToUpdate = true
+		m.triedToUpdate = true
 		fmt.Println("Couldn't find fabric for version: ", name, ", refreshing manfiest")
 		m.updateManifest()
 		return m.FindFabric(name, loader)
 	}
-	triedToUpdate = false
+	m.triedToUpdate = false
 
 	return &gameModel.VersionInfo{
 		Id:     fmt.Sprintf(partial.Id, loader),
