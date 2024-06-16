@@ -122,7 +122,6 @@ func (m *VersionManager) FindVanilla(name string) (*gameModel.VersionInfo, error
 			return nil, ErrUnknownVersion
 		}
 		m.triedToUpdate = true
-		fmt.Println("Couldn't find version: ", name, ", refreshing manfiest")
 		m.updateManifest()
 		return m.FindVanilla(name)
 	}
@@ -141,7 +140,6 @@ func (m *VersionManager) FindFabric(name, loader string) (*gameModel.VersionInfo
 			return nil, ErrUnknownFabricVersion
 		}
 		m.triedToUpdate = true
-		fmt.Println("Couldn't find fabric for version: ", name, ", refreshing manfiest")
 		m.updateManifest()
 		return m.FindFabric(name, loader)
 	}
