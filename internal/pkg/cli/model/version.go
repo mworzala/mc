@@ -14,6 +14,12 @@ type Version struct {
 	Date     string
 	Go       string
 	Platform string
+	Game     GameVersion
+}
+
+type GameVersion struct {
+	Release  string
+	Snapshot string
 }
 
 func (v *Version) String() string {
@@ -22,7 +28,10 @@ func (v *Version) String() string {
 		if v.State != "clean" {
 			modified = "*"
 		}
-		return fmt.Sprintf("mc-cli dev%s", modified)
+		return heredoc.Docf(`
+			mc-cli dev%s
+			minecraft %s (%s)`,
+			modified, v.Game.Release, v.Game.Snapshot)
 	}
 
 	date := ""
@@ -33,5 +42,6 @@ func (v *Version) String() string {
 	return heredoc.Docf(`
 		mc-cli version %s%s
 		https://github.com/mworzala/mc/releases/tag/v%s
-`, v.Tag, date, v.Tag)
+		minecraft %s (%s)`,
+		v.Tag, date, v.Tag, v.Game.Release, v.Game.Snapshot)
 }

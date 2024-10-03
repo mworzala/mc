@@ -21,6 +21,11 @@ func newVersionCmd(app *cli.App) *cobra.Command {
 				state = "modified"
 			}
 
+			latestRelease, latestSnapshot, err := app.VersionManager().LatestVersions()
+			if err != nil {
+				return err
+			}
+
 			return app.Present(&appModel.Version{
 				Tag:      app.Build.Version,
 				Commit:   app.Build.Commit,
@@ -28,6 +33,10 @@ func newVersionCmd(app *cli.App) *cobra.Command {
 				Date:     app.Build.Date,
 				Go:       runtime.Version(),
 				Platform: fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+				Game: appModel.GameVersion{
+					Release:  latestRelease,
+					Snapshot: latestSnapshot,
+				},
 			})
 		},
 	}

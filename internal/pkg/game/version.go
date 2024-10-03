@@ -110,9 +110,16 @@ func NewVersionManager(dataDir string) (*VersionManager, error) {
 		m.manifestV2 = &manifest
 	}
 
-	//todo update if old
-
 	return m, nil
+}
+
+func (m *VersionManager) LatestVersions() (release, snapshot string, err error) {
+	if m.manifestV2.LastUpdated.Before(time.Now().Add(-10 * time.Minute)) {
+		m.triedToUpdate = true
+		_ = m.updateManifest()
+	}
+
+	return m.manifestV2.Vanilla.Release, m.manifestV2.Vanilla.Snapshot, nil
 }
 
 func (m *VersionManager) FindVanilla(name string) (*gameModel.VersionInfo, error) {
@@ -122,7 +129,7 @@ func (m *VersionManager) FindVanilla(name string) (*gameModel.VersionInfo, error
 			return nil, ErrUnknownVersion
 		}
 		m.triedToUpdate = true
-		m.updateManifest()
+		_ = m.updateManifest()
 		return m.FindVanilla(name)
 	}
 	m.triedToUpdate = false
@@ -140,7 +147,7 @@ func (m *VersionManager) FindFabric(name, loader string) (*gameModel.VersionInfo
 			return nil, ErrUnknownFabricVersion
 		}
 		m.triedToUpdate = true
-		m.updateManifest()
+		_ = m.updateManifest()
 		return m.FindFabric(name, loader)
 	}
 	m.triedToUpdate = false
