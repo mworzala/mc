@@ -11,6 +11,7 @@ import (
 	"github.com/mworzala/mc/internal/pkg/java"
 	"github.com/mworzala/mc/internal/pkg/platform"
 	"github.com/mworzala/mc/internal/pkg/profile"
+	"github.com/mworzala/mc/internal/pkg/skin"
 	"github.com/spf13/viper"
 )
 
@@ -34,6 +35,7 @@ type App struct {
 	versionManager *game.VersionManager
 	profileManager profile.Manager
 	gameManager    game.Manager
+	skinManager    skin.Manager
 }
 
 func NewApp(build BuildInfo) *App {
@@ -132,4 +134,16 @@ func (a *App) GameManager() game.Manager {
 	}
 
 	return a.gameManager
+}
+
+func (a *App) SkinManager() skin.Manager {
+	if a.skinManager == nil {
+		var err error
+		a.skinManager, err = skin.NewManager(a.ConfigDir)
+		if err != nil {
+			a.Fatal(err)
+		}
+	}
+
+	return a.skinManager
 }
