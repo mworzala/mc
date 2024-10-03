@@ -1,25 +1,27 @@
 package modrinth
 
-import "time"
-
-type VersionType string
+type ProjectType string
 
 const (
-	Alpha   VersionType = "alpha"
-	Beta    VersionType = "beta"
-	Release VersionType = "release"
+	Mod          ProjectType = "mod"
+	ModPack      ProjectType = "modpack"
+	ResourcePack ProjectType = "resourcepack"
+	Shader       ProjectType = "shader"
 )
 
-type Version struct {
-	VersionType   VersionType `json:"version_type"`
-	DatePublished time.Time   `json:"date_published"`
-	Files         []*struct {
-		Hashes struct {
-			Sha1 string `json:"sha1"`
-		}
-		Url      string `json:"url"`
-		Filename string `json:"filename"`
-		Primary  bool   `json:"primary"`
-		Size     int64  `json:"size"`
-	} `json:"files"`
-}
+type SupportStatus string
+
+const (
+	Required    SupportStatus = "required"
+	Optional    SupportStatus = "optional"
+	Unsupported SupportStatus = "unsupported"
+	Unknown     SupportStatus = "unknown"
+)
+
+type MonetizationStatus string
+
+const (
+	Monetized        MonetizationStatus = "monetized"
+	Demonetized      MonetizationStatus = "demonetized"
+	ForceDemonetized MonetizationStatus = "force-demonetized"
+)
