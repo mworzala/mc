@@ -8,21 +8,21 @@ import (
 )
 
 type Skin struct {
-	Name string
-	Date time.Time
+	Name     string
+	Modified time.Time
 }
 
 func (i *Skin) String() string {
-	return fmt.Sprintf("%s\t%s", i.Name, i.Date)
+	return fmt.Sprintf("%s\t%s", i.Name, i.Modified)
 }
 
 type SkinList []*Skin
 
 func (l SkinList) String() string {
 	table := uitable.New()
-	table.AddRow("NAME", "DATE")
+	table.AddRow("NAME", "MODIFIED")
 	for _, skin := range l {
-		table.AddRow(skin.Name, skin.Date)
+		table.AddRow(skin.Name, skin.Modified)
 	}
 	return table.String()
 }

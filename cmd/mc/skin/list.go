@@ -32,8 +32,8 @@ func (o *listSkinsOpts) listSkins() error {
 	var result appModel.SkinList
 	for _, skin := range skinManager.Skins() {
 		result = append(result, &appModel.Skin{
-			Name: skin.Name,
-			Date: skin.AddedDate,
+			Name:     skin.Name,
+			Modified: skin.AddedDate,
 		})
 	}
 

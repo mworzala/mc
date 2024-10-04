@@ -1,18 +1,20 @@
 package skin
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/mworzala/mc/internal/pkg/mojang"
 )
 
 var (
@@ -25,11 +27,6 @@ var (
 
 func isValidName(name string) bool {
 	return namePattern.MatchString(name)
-}
-
-func isURL(s string) bool {
-	u, err := url.ParseRequestURI(s)
-	return err == nil && (u.Scheme == "http" || u.Scheme == "https")
 }
 
 func isFilePath(s string) bool {
@@ -54,8 +51,7 @@ type Manager interface {
 	CreateSkin(name string, variant string, skinData string, capeData string) (*Skin, error)
 	Skins() []*Skin
 	GetSkin(name string) (*Skin, error)
-
-	GetProfileInformation(accountToken string) (*profileInformationResponse, error)
+	ApplySkin(s *Skin, client *mojang.Client, ctx context.Context, accountToken string) error
 
 	Save() error
 }
@@ -156,6 +152,39 @@ func (m *fileManager) GetSkin(name string) (*Skin, error) {
 	return nil, ErrNotFound
 }
 
+func (m *fileManager) ApplySkin(s *Skin, client *mojang.Client, ctx context.Context, accountToken string) error {
+	var newCape bool
+
+	if s.Cape == "none" {
+		_, err := client.DeleteCape(ctx, accountToken)
+		if err != nil {
+			return err
+		}
+	}
+
+	info, err := client.ChangeSkin(ctx, accountToken, s.Skin, s.Variant)
+	if err != nil {
+		return err
+	}
+
+	if s.Cape != "none" {
+		for _, c := range info.Capes {
+			if c.ID == s.Cape && c.State == "INACTIVE" {
+				newCape = true
+			}
+		}
+	}
+
+	if newCape {
+		_, err = client.ChangeCape(ctx, accountToken, s.Cape)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *fileManager) Save() error {
 	f, err := os.OpenFile(m.Path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
 	if err != nil {
@@ -168,28 +197,4 @@ func (m *fileManager) Save() error {
 	}
 
 	return nil
-}
-
-func (m *fileManager) GetProfileInformation(accountToken string) (*profileInformationResponse, error) {
-	endpoint := "https://api.minecraftservices.com/minecraft/profile"
-
-	req, err := http.NewRequest("GET", endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accountToken))
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	var information profileInformationResponse
-	if err := json.NewDecoder(res.Body).Decode(&information); err != nil {
-		return nil, err
-	}
-
-	return &information, nil
-
 }
