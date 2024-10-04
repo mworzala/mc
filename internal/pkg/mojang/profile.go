@@ -82,7 +82,7 @@ func (c *Client) ChangeSkin(ctx context.Context, accountToken string, texture st
 }
 
 func (c *Client) ChangeCape(ctx context.Context, accountToken string, cape string) (*ProfileInformationResponse, error) {
-	endpoint := "/capes/active"
+	endpoint := "capes/active"
 	headers := http.Header{}
 	headers.Set("Authorization", "Bearer "+accountToken)
 	headers.Set("Content-Type", "application/json")
@@ -100,9 +100,29 @@ func (c *Client) ChangeCape(ctx context.Context, accountToken string, cape strin
 }
 
 func (c *Client) DeleteCape(ctx context.Context, accountToken string) (*ProfileInformationResponse, error) {
-	endpoint := "/capes/active"
+	endpoint := "capes/active"
 	headers := http.Header{}
 	headers.Set("Authorization", "Bearer "+accountToken)
 
 	return delete[ProfileInformationResponse](c, ctx, endpoint, headers)
+}
+
+func (c *Client) UsernameToUuid(ctx context.Context, username string) (*UsernameToUuidResponse, error) {
+	oldUrl := c.baseUrl
+	c.baseUrl = mojangApiUrl // i dont like this but i cant think of any other way atm :(
+	endpoint := "users/profiles/minecraft/" + username
+
+	response, err := get[UsernameToUuidResponse](c, ctx, endpoint, http.Header{})
+	c.baseUrl = oldUrl
+	return response, err
+}
+
+func (c *Client) UuidToProfile(ctx context.Context, uuid string) (*UuidToProfileResponse, error) {
+	oldUrl := c.baseUrl
+	c.baseUrl = sessionserverUrl // i dont like this but i cant think of any other way atm :(
+	endpoint := "session/minecraft/profile/" + uuid
+
+	response, err := get[UuidToProfileResponse](c, ctx, endpoint, http.Header{})
+	c.baseUrl = oldUrl
+	return response, err
 }

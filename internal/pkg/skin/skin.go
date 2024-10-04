@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/mworzala/mc/internal/pkg/mojang"
+	"github.com/mworzala/mc/internal/pkg/util"
 )
 
 var (
@@ -48,7 +49,7 @@ func isImage(data []byte) bool {
 }
 
 type Manager interface {
-	CreateSkin(name string, variant string, skinData string, capeData string) (*Skin, error)
+	CreateSkin(name string, variant string, skinData string, capeData string, client *mojang.Client, ctx context.Context) (*Skin, error)
 	Skins() []*Skin
 	GetSkin(name string) (*Skin, error)
 	ApplySkin(s *Skin, client *mojang.Client, ctx context.Context, accountToken string) error
@@ -90,7 +91,7 @@ func NewManager(dataDir string) (Manager, error) {
 	return &manager, nil
 }
 
-func (m *fileManager) CreateSkin(name string, variant string, skinData string, capeData string) (*Skin, error) {
+func (m *fileManager) CreateSkin(name string, variant string, skinData string, capeData string, client *mojang.Client, ctx context.Context) (*Skin, error) {
 	if !isValidName(name) {
 		return nil, ErrInvalidName
 	}
@@ -99,9 +100,8 @@ func (m *fileManager) CreateSkin(name string, variant string, skinData string, c
 	}
 
 	skin := &Skin{
-		Name:    name,
-		Cape:    capeData,
-		Variant: variant,
+		Name: name,
+		Cape: capeData,
 	}
 	if isFilePath(skinData) {
 		fileBytes, err := os.ReadFile(skinData)
@@ -116,13 +116,70 @@ func (m *fileManager) CreateSkin(name string, variant string, skinData string, c
 		base64Str := base64.StdEncoding.EncodeToString(fileBytes)
 		skin.Skin = base64Str
 	} else {
-		skin.Skin = skinData
+		texture, newVariant := getSkinInfo(skinData, variant, client, ctx)
+		skin.Skin = texture
+		skin.Variant = newVariant
+	}
+
+	if variant == "" && skin.Variant == "" {
+		skin.Variant = "classic"
+	} else if skin.Variant == "" {
+		skin.Variant = variant
 	}
 
 	skin.AddedDate = time.Now()
 
 	m.AllSkins[strings.ToLower(name)] = skin
 	return skin, nil
+}
+
+func getSkinInfo(skinData string, variant string, client *mojang.Client, ctx context.Context) (string, string) {
+	if util.IsUUID(skinData) {
+		profile, err := client.UuidToProfile(ctx, skinData)
+		if err != nil {
+			return skinData, variant
+		}
+
+		base64TextureInfo, err := base64.StdEncoding.DecodeString(profile.Properties[0].Value)
+		if err != nil {
+			return skinData, variant
+		}
+		var textureInfo mojang.TextureInformation
+		err = json.Unmarshal(base64TextureInfo, &textureInfo)
+		if err != nil {
+			return skinData, variant
+		}
+		if variant == "" {
+			variant = textureInfo.Textures.Skin.Metadata.Model
+		}
+		return textureInfo.Textures.Skin.Url, variant
+
+	} else {
+		uuid, err := client.UsernameToUuid(ctx, skinData)
+		if err != nil {
+			return skinData, variant
+		}
+
+		profile, err := client.UuidToProfile(ctx, uuid.Id)
+		if err != nil {
+			return skinData, variant
+		}
+		base64texture := profile.Properties[0].Value
+
+		base64TextureInfo, err := base64.StdEncoding.DecodeString(base64texture)
+		if err != nil {
+			return skinData, variant
+		}
+		var textureInfo mojang.TextureInformation
+		err = json.Unmarshal(base64TextureInfo, &textureInfo)
+		if err != nil {
+			return skinData, variant
+		}
+		if variant == "" {
+			variant = textureInfo.Textures.Skin.Metadata.Model
+		}
+		return textureInfo.Textures.Skin.Url, variant
+	}
 }
 
 func (m *fileManager) Skins() (result []*Skin) {
