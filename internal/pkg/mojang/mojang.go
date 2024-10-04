@@ -15,8 +15,10 @@ const (
 )
 
 var (
-	servicesApiUrl = "https://api.minecraftservices.com/"
-	profileApiUrl  = servicesApiUrl + "minecraft/profile"
+	mojangApiUrl     = "https://api.mojang.com/"
+	sessionserverUrl = "https://sessionserver.mojang.com/"
+	servicesApiUrl   = "https://api.minecraftservices.com/"
+	profileApiUrl    = servicesApiUrl + "minecraft/profile"
 )
 
 type Client struct {

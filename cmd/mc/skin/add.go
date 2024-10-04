@@ -26,7 +26,7 @@ type addSkinOpts struct {
 var (
 	ErrInvalidVariant = errors.New("invalid variant")
 
-	validationMap = map[string]bool{"classic": true, "slim": true}
+	validationMap = map[string]bool{"classic": true, "slim": true, "": true}
 )
 
 func newAddCmd(app *cli.App, account string) *cobra.Command {
@@ -47,7 +47,7 @@ func newAddCmd(app *cli.App, account string) *cobra.Command {
 
 	o.account = account
 
-	cmd.Flags().StringVar(&o.variant, "variant", "classic", "Skin variant [classic/slim]")
+	cmd.Flags().StringVar(&o.variant, "variant", "", "Skin variant [classic/slim] (defaults to classic)")
 	cmd.Flags().StringVar(&o.cape, "cape", "", "Cape name, 'none' to remove")
 	cmd.Flags().BoolVar(&o.apply, "apply", false, "Apply the skin")
 	cmd.Flags().BoolVar(&o.apply, "set", false, "Apply the skin")
@@ -112,7 +112,7 @@ func (o *addSkinOpts) execute(args []string) error {
 
 	skinData := args[0]
 
-	skin, err := o.app.SkinManager().CreateSkin(o.name, o.variant, skinData, o.cape)
+	skin, err := o.app.SkinManager().CreateSkin(o.name, o.variant, skinData, o.cape, client, ctx)
 	if err != nil {
 		return err
 	}
