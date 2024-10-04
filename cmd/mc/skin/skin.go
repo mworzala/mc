@@ -8,12 +8,16 @@ import (
 func NewSkinCmd(app *cli.App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "skin",
-		Short: "Manage Minecraft Skins and Capes",
+		Short: "Manage Minecraft skins and capes",
 	}
 
+	var account string
+
+	cmd.Flags().StringVar(&account, "account", "", "Account to use")
+
 	cmd.AddCommand(newListCmd(app))
-	cmd.AddCommand(newAddCmd(app))
-	cmd.AddCommand(newApplyCmd(app))
+	cmd.AddCommand(newAddCmd(app, account))
+	cmd.AddCommand(newApplyCmd(app, account))
 
 	return cmd
 }

@@ -1,12 +1,15 @@
 package skin
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"slices"
+	"os"
+	"os/signal"
 
 	"github.com/google/uuid"
 	"github.com/mworzala/mc/internal/pkg/cli"
+	"github.com/mworzala/mc/internal/pkg/mojang"
 	"github.com/spf13/cobra"
 )
 
@@ -21,13 +24,12 @@ type addSkinOpts struct {
 }
 
 var (
-	ErrInvalidType    = errors.New("invalid type")
 	ErrInvalidVariant = errors.New("invalid variant")
 
-	validVariants = []string{"classic", "slim"}
+	validationMap = map[string]bool{"classic": true, "slim": true}
 )
 
-func newAddCmd(app *cli.App) *cobra.Command {
+func newAddCmd(app *cli.App, account string) *cobra.Command {
 	var o addSkinOpts
 
 	cmd := &cobra.Command{
@@ -43,7 +45,8 @@ func newAddCmd(app *cli.App) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.account, "account", "", "Account to use")
+	o.account = account
+
 	cmd.Flags().StringVar(&o.variant, "variant", "classic", "Skin variant [classic/slim]")
 	cmd.Flags().StringVar(&o.cape, "cape", "", "Cape name, 'none' to remove")
 	cmd.Flags().BoolVar(&o.apply, "apply", false, "Apply the skin")
@@ -59,7 +62,7 @@ func (o *addSkinOpts) validateArgs(cmd *cobra.Command, args []string) (err error
 		return err
 	}
 
-	if !slices.Contains(validVariants, o.variant) {
+	if !validationMap[o.variant] {
 		return ErrInvalidVariant
 	}
 
@@ -84,7 +87,11 @@ func (o *addSkinOpts) execute(args []string) error {
 		return err
 	}
 
-	info, err := o.app.SkinManager().GetProfileInformation(token)
+	client := mojang.NewProfileClient(o.app.Build.Version)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	info, err := client.ProfileInformation(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -112,13 +119,18 @@ func (o *addSkinOpts) execute(args []string) error {
 
 	if o.apply {
 
-		err = skin.Apply(token)
+		err = o.app.SkinManager().ApplySkin(skin, client, ctx, token)
 		if err != nil {
 			return err
 		}
+		if !o.app.Config.NonInteractive {
+			fmt.Printf("skin %s applied", skin.Name)
+		}
 	}
 
-	fmt.Printf("skin %s with cape %s was added to the list", skin.Name, skin.Cape)
+	if !o.app.Config.NonInteractive {
+		fmt.Printf("skin %s with cape %s was added to the list", skin.Name, skin.Cape)
+	}
 
 	return o.app.SkinManager().Save()
 

@@ -1,7 +1,13 @@
 package skin
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+
 	"github.com/mworzala/mc/internal/pkg/cli"
+	"github.com/mworzala/mc/internal/pkg/mojang"
 	"github.com/spf13/cobra"
 )
 
@@ -11,7 +17,7 @@ type applySkinOpts struct {
 	account string
 }
 
-func newApplyCmd(app *cli.App) *cobra.Command {
+func newApplyCmd(app *cli.App, account string) *cobra.Command {
 	var o applySkinOpts
 
 	cmd := &cobra.Command{
@@ -28,7 +34,7 @@ func newApplyCmd(app *cli.App) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.account, "account", "", "Account to use")
+	o.account = account
 
 	return cmd
 }
@@ -58,5 +64,17 @@ func (o *applySkinOpts) execute(args []string) error {
 		return err
 	}
 
-	return skin.Apply(token)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	client := mojang.NewProfileClient(o.app.Build.Version)
+
+	err = o.app.SkinManager().ApplySkin(skin, client, ctx, token)
+	if err != nil {
+		return err
+	}
+	if !o.app.Config.NonInteractive {
+		fmt.Printf("skin %s applied", skin.Name)
+	}
+	return nil
 }
