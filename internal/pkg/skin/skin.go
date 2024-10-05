@@ -49,10 +49,10 @@ func isImage(data []byte) bool {
 }
 
 type Manager interface {
-	CreateSkin(name string, variant string, skinData string, capeData string, client *mojang.Client, ctx context.Context) (*Skin, error)
+	CreateSkin(ctx context.Context, client *mojang.Client, name string, variant string, skinData string, capeData string) (*Skin, error)
 	Skins() []*Skin
 	GetSkin(name string) (*Skin, error)
-	ApplySkin(s *Skin, client *mojang.Client, ctx context.Context, accountToken string) error
+	ApplySkin(ctx context.Context, client *mojang.Client, s *Skin) error
 
 	Save() error
 }
@@ -91,7 +91,7 @@ func NewManager(dataDir string) (Manager, error) {
 	return &manager, nil
 }
 
-func (m *fileManager) CreateSkin(name string, variant string, skinData string, capeData string, client *mojang.Client, ctx context.Context) (*Skin, error) {
+func (m *fileManager) CreateSkin(ctx context.Context, client *mojang.Client, name string, variant string, skinData string, capeData string) (*Skin, error) {
 	if !isValidName(name) {
 		return nil, ErrInvalidName
 	}
@@ -116,7 +116,7 @@ func (m *fileManager) CreateSkin(name string, variant string, skinData string, c
 		base64Str := base64.StdEncoding.EncodeToString(fileBytes)
 		skin.Skin = base64Str
 	} else {
-		texture, newVariant := getSkinInfo(skinData, variant, client, ctx)
+		texture, newVariant := getSkinInfo(ctx, client, skinData, variant)
 		skin.Skin = texture
 		skin.Variant = newVariant
 	}
@@ -133,7 +133,7 @@ func (m *fileManager) CreateSkin(name string, variant string, skinData string, c
 	return skin, nil
 }
 
-func getSkinInfo(skinData string, variant string, client *mojang.Client, ctx context.Context) (string, string) {
+func getSkinInfo(ctx context.Context, client *mojang.Client, skinData string, variant string) (string, string) {
 	if util.IsUUID(skinData) {
 		profile, err := client.UuidToProfile(ctx, skinData)
 		if err != nil {
@@ -209,17 +209,17 @@ func (m *fileManager) GetSkin(name string) (*Skin, error) {
 	return nil, ErrNotFound
 }
 
-func (m *fileManager) ApplySkin(s *Skin, client *mojang.Client, ctx context.Context, accountToken string) error {
+func (m *fileManager) ApplySkin(ctx context.Context, client *mojang.Client, s *Skin) error {
 	var newCape bool
 
 	if s.Cape == "none" {
-		_, err := client.DeleteCape(ctx, accountToken)
+		_, err := client.DeleteCape(ctx)
 		if err != nil {
 			return err
 		}
 	}
 
-	info, err := client.ChangeSkin(ctx, accountToken, s.Skin, s.Variant)
+	info, err := client.ChangeSkin(ctx, s.Skin, s.Variant)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (m *fileManager) ApplySkin(s *Skin, client *mojang.Client, ctx context.Cont
 	}
 
 	if newCape {
-		_, err = client.ChangeCape(ctx, accountToken, s.Cape)
+		_, err = client.ChangeCape(ctx, s.Cape)
 		if err != nil {
 			return err
 		}

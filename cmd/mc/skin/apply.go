@@ -67,9 +67,9 @@ func (o *applySkinOpts) execute(args []string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	client := mojang.NewProfileClient(o.app.Build.Version)
+	client := mojang.NewProfileClient(o.app.Build.Version, token)
 
-	err = o.app.SkinManager().ApplySkin(skin, client, ctx, token)
+	err = o.app.SkinManager().ApplySkin(ctx, client, skin)
 	if err != nil {
 		return err
 	}
