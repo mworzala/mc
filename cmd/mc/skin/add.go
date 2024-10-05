@@ -87,11 +87,11 @@ func (o *addSkinOpts) execute(args []string) error {
 		return err
 	}
 
-	client := mojang.NewProfileClient(o.app.Build.Version)
+	client := mojang.NewProfileClient(o.app.Build.Version, token)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	info, err := client.ProfileInformation(ctx, token)
+	info, err := client.ProfileInformation(ctx)
 	if err != nil {
 		return err
 	}
@@ -112,14 +112,14 @@ func (o *addSkinOpts) execute(args []string) error {
 
 	skinData := args[0]
 
-	skin, err := o.app.SkinManager().CreateSkin(o.name, o.variant, skinData, o.cape, client, ctx)
+	skin, err := o.app.SkinManager().CreateSkin(ctx, client, o.name, o.variant, skinData, o.cape)
 	if err != nil {
 		return err
 	}
 
 	if o.apply {
 
-		err = o.app.SkinManager().ApplySkin(skin, client, ctx, token)
+		err = o.app.SkinManager().ApplySkin(ctx, client, skin)
 		if err != nil {
 			return err
 		}

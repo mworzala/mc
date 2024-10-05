@@ -16,16 +16,16 @@ func isURL(s string) bool {
 	return err == nil && (u.Scheme == "http" || u.Scheme == "https")
 }
 
-func (c *Client) ProfileInformation(ctx context.Context, accountToken string) (*ProfileInformationResponse, error) {
+func (c *Client) ProfileInformation(ctx context.Context) (*ProfileInformationResponse, error) {
 
 	headers := http.Header{}
 
-	headers.Set("Authorization", "Bearer "+accountToken)
+	headers.Set("Authorization", "Bearer "+c.accountToken)
 
-	return get[ProfileInformationResponse](c, ctx, "", headers)
+	return get[ProfileInformationResponse](c, ctx, "/", headers)
 }
 
-func (c *Client) ChangeSkin(ctx context.Context, accountToken string, texture string, variant string) (*ProfileInformationResponse, error) {
+func (c *Client) ChangeSkin(ctx context.Context, texture string, variant string) (*ProfileInformationResponse, error) {
 	var body *bytes.Buffer
 	var contentType string
 
@@ -76,15 +76,15 @@ func (c *Client) ChangeSkin(ctx context.Context, accountToken string, texture st
 	headers := http.Header{}
 
 	headers.Set("Content-Type", contentType)
-	headers.Set("Authorization", "Bearer "+accountToken)
+	headers.Set("Authorization", "Bearer "+c.accountToken)
 
 	return post[ProfileInformationResponse](c, ctx, "/skins", headers, body)
 }
 
-func (c *Client) ChangeCape(ctx context.Context, accountToken string, cape string) (*ProfileInformationResponse, error) {
-	endpoint := "capes/active"
+func (c *Client) ChangeCape(ctx context.Context, cape string) (*ProfileInformationResponse, error) {
+	endpoint := "/capes/active"
 	headers := http.Header{}
-	headers.Set("Authorization", "Bearer "+accountToken)
+	headers.Set("Authorization", "Bearer "+c.accountToken)
 	headers.Set("Content-Type", "application/json")
 
 	requestData := map[string]string{
@@ -99,30 +99,22 @@ func (c *Client) ChangeCape(ctx context.Context, accountToken string, cape strin
 	return put[ProfileInformationResponse](c, ctx, endpoint, headers, bytes.NewBuffer(jsonData))
 }
 
-func (c *Client) DeleteCape(ctx context.Context, accountToken string) (*ProfileInformationResponse, error) {
-	endpoint := "capes/active"
+func (c *Client) DeleteCape(ctx context.Context) (*ProfileInformationResponse, error) {
+	endpoint := "/capes/active"
 	headers := http.Header{}
-	headers.Set("Authorization", "Bearer "+accountToken)
+	headers.Set("Authorization", "Bearer "+c.accountToken)
 
 	return delete[ProfileInformationResponse](c, ctx, endpoint, headers)
 }
 
 func (c *Client) UsernameToUuid(ctx context.Context, username string) (*UsernameToUuidResponse, error) {
-	oldUrl := c.baseUrl
-	c.baseUrl = mojangApiUrl // i dont like this but i cant think of any other way atm :(
-	endpoint := "users/profiles/minecraft/" + username
+	url := mojangApiUrl + "/users/profiles/minecraft/" + username
 
-	response, err := get[UsernameToUuidResponse](c, ctx, endpoint, http.Header{})
-	c.baseUrl = oldUrl
-	return response, err
+	return do[UsernameToUuidResponse](c, ctx, http.MethodGet, url, http.Header{}, nil)
 }
 
 func (c *Client) UuidToProfile(ctx context.Context, uuid string) (*UuidToProfileResponse, error) {
-	oldUrl := c.baseUrl
-	c.baseUrl = sessionserverUrl // i dont like this but i cant think of any other way atm :(
-	endpoint := "session/minecraft/profile/" + uuid
+	url := sessionserverUrl + "/session/minecraft/profile/" + uuid
 
-	response, err := get[UuidToProfileResponse](c, ctx, endpoint, http.Header{})
-	c.baseUrl = oldUrl
-	return response, err
+	return do[UuidToProfileResponse](c, ctx, http.MethodGet, url, http.Header{}, nil)
 }
