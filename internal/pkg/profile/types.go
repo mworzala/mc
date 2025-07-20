@@ -21,7 +21,7 @@ type Profile struct {
 	Name      string  `json:"name"`
 	Directory string  `json:"directory"`
 	config    *Config // Config is loaded on demand
-	mods      []Mod   `json:"-"` // Stored in Directory/.mc-cli/mods.json
+	mods      []Mod   // Stored in Directory/.mc-cli/mods.json
 
 	Type Type `json:"type"`
 	// Version represents the version json used for the profile.
@@ -30,7 +30,7 @@ type Profile struct {
 
 	// GameVersion represents the Minecraft version of the profile.
 	// Accessed through GameVersion() because it defaults to parsing Version in the event that the profile is old
-	gameVersion string `json:"game_version"`
+	gameVersion string
 }
 
 func (p *Profile) Config() *Config {
