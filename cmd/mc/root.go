@@ -2,6 +2,7 @@ package mc
 
 import (
 	"github.com/MakeNowJust/heredoc"
+	"github.com/mworzala/mc/cmd/mc/mod"
 	"github.com/mworzala/mc/cmd/mc/modrinth"
 	"github.com/mworzala/mc/cmd/mc/skin"
 
@@ -43,6 +44,7 @@ func NewRootCmd(app *cli.App) *cobra.Command {
 	cmd.AddCommand(modrinth.NewModrinthCmd(app))
 	cmd.AddCommand(newVersionCmd(app))
 	cmd.AddCommand(newDebugCmd(app))
+	cmd.AddCommand(mod.NewModProfileCmd(app))
 
 	return cmd
 }

@@ -55,6 +55,7 @@ func get[T any](c *Client, ctx context.Context, endpoint string, params url.Valu
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("User-Agent", c.userAgent)
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
@@ -71,6 +72,8 @@ func get[T any](c *Client, ctx context.Context, endpoint string, params url.Valu
 		return nil, fmt.Errorf("400 %s: %s", errorRes.Error, errorRes.Description)
 	} else if res.StatusCode == http.StatusInternalServerError {
 		return nil, errors.New("500 internal server error")
+	} else if res.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("404 Not Found")
 	} else if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected response from server: %d", res.StatusCode)
 	}
