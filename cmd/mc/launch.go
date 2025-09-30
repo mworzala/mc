@@ -20,7 +20,8 @@ type launchOpts struct {
 	quickPlayMultiplayer  string
 	quickPlayRealms       string
 
-	tail bool
+	tail    bool
+	jvmArgs []string
 }
 
 func newLaunchCmd(app *cli.App) *cobra.Command {
@@ -43,6 +44,7 @@ func newLaunchCmd(app *cli.App) *cobra.Command {
 	cmd.MarkFlagsMutuallyExclusive("world", "server", "realm")
 
 	cmd.Flags().BoolVarP(&o.tail, "tail", "t", false, "attach the game stdout to the process")
+	cmd.Flags().StringSliceVarP(&o.jvmArgs, "jvmArgs", "a", []string{}, "add jvm arguments to the game")
 
 	return cmd
 }
@@ -99,5 +101,5 @@ func (o *launchOpts) launch(args []string) error {
 		}
 	}
 
-	return launch.LaunchProfile(o.app.ConfigDir, p, acc, accessToken, javaInstall, o.tail, quickPlay)
+	return launch.LaunchProfile(o.app.ConfigDir, p, acc, accessToken, javaInstall, o.tail, quickPlay, o.jvmArgs)
 }

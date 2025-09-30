@@ -30,6 +30,7 @@ func LaunchProfile(
 	javaInstall *java.Installation,
 	tail bool,
 	quickPlay *QuickPlay,
+	jvmArgs []string,
 ) error {
 	var spec gameModel.VersionSpec
 
@@ -130,7 +131,7 @@ func LaunchProfile(
 		return s
 	}
 
-	var args []string
+	var args = jvmArgs
 
 	for _, arg := range spec.Arguments.JVM {
 		if s, ok := arg.(string); ok {
